@@ -147,12 +147,18 @@ def rotation_to_z(n: np.ndarray) -> Matrix:
 
 # ----------------------------------------------------------------------------- site selection
 class Sampler:
-    def __init__(self, dg, zmax):
-        self.dg = dg
-        self.zmax = zmax
+    """Ray caster that looks from the camera position (perspective), so a site is only valid when the
+    camera can actually see it; a vertical ray would accept the floor of a deep bay that the camera's
+    slanted line of sight cannot reach."""
 
-    def hit(self, x, y):
-        ok, loc, nrm, idx, obj, _ = bpy.context.scene.ray_cast(self.dg, Vector((x, y, self.zmax)), Vector((0, 0, -1)))
+    def __init__(self, dg, cam_pos):
+        self.dg = dg
+        self.cam = Vector(cam_pos)
+
+    def hit(self, x, y, z=0.0):
+        target = Vector((x, y, z))
+        direction = (target - self.cam).normalized()
+        ok, loc, nrm, idx, obj, _ = bpy.context.scene.ray_cast(self.dg, self.cam, direction)
         return (loc, nrm, idx, obj) if ok else None
 
 
@@ -171,13 +177,12 @@ def farthest_point_pick(cands: np.ndarray, k: int, min_spacing: float) -> list:
     return chosen
 
 
-def choose_sites(part_objs: dict, cfg_sites: dict, n_per_zone: int, bbox):
-    """Grid-sample the part from above; a site is valid when its clearance ring lands on the same
-    zone, is locally flat (height tolerance) and faces the camera."""
+def choose_sites(part_objs: dict, cfg_sites: dict, n_per_zone: int, bbox, cam_pos):
+    """Grid-sample the part as seen from the camera; a site is valid when its clearance ring lands on
+    the same zone, is locally flat (height tolerance) and faces the camera."""
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
-    zmax = bbox[1][2] + 50.0
-    smp = Sampler(dg, zmax)
+    smp = Sampler(dg, cam_pos)
     step = float(cfg_sites["grid_mm"])
     clear = float(cfg_sites["clearance_mm"])
     tilt_cos = math.cos(math.radians(float(cfg_sites["cast_max_tilt_deg"])))
@@ -199,7 +204,7 @@ def choose_sites(part_objs: dict, cfg_sites: dict, n_per_zone: int, bbox):
             ok = True
             normals = [np.array(nrm[:])]
             for dx, dy in ring:
-                hr = smp.hit(x + dx, y + dy)
+                hr = smp.hit(loc.x + dx, loc.y + dy, loc.z)
                 if hr is None or hr[3] is not obj:
                     ok = False
                     break
@@ -218,7 +223,7 @@ def choose_sites(part_objs: dict, cfg_sites: dict, n_per_zone: int, bbox):
                 continue
             n = np.mean(normals, axis=0)
             n /= np.linalg.norm(n)
-            cands[zone].append((x, y, float(loc.z), n))
+            cands[zone].append((float(loc.x), float(loc.y), float(loc.z), n))
     sites = {}
     for zone in ("machined", "cast"):
         arr = np.array([(c[0], c[1]) for c in cands[zone]]) if cands[zone] else np.zeros((0, 2))
@@ -718,7 +723,8 @@ def main():
 
     # ---- sites and defects
     n_per_zone = sum(len(size_list(cfg["defects"], t)) for t in ROW_ORDER if t in cfg["defects"])
-    sites = choose_sites(zone_obj, pc["sites"], n_per_zone, bbox)
+    cam_pos = (0.0, 0.0, float(cfg.get("framing", {}).get("working_distance_mm", 800.0)))
+    sites = choose_sites(zone_obj, pc["sites"], n_per_zone, bbox, cam_pos)
     defects = build_defect_list(cfg, sites)
     root_mm = float(cfg["coupon"].get("burr_root_mm", 0.01))
     defect_objects = {}

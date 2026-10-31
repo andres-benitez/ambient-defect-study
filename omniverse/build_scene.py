@@ -286,7 +286,17 @@ def main():
         return float(Y[bg].mean()), zone, defects, classes
 
     sub = common.subframes_for(cfg, probe_spp)
-    frame = ann.render(sub)
+    # the semantic labels can take a few frames to reach the annotators: retry the probe until the
+    # machined zone is present instead of failing on a half-initialised frame
+    frame = None
+    for attempt in range(5):
+        frame = ann.render(sub)
+        seen = common.semantic_class_ids(frame["sem_info"])
+        if "zone_machined" in seen:
+            break
+        print(f"[build_scene] probe attempt {attempt + 1}: classes {sorted(seen)}; waiting for semantics")
+        for _ in range(10):
+            app.update()
     mean0, zone_m, defects_m, classes = machined_bg_mean(frame)
     print(f"[build_scene] probe 1: machined bg mean {mean0:.5f} at intensity {initial_intensity} ({frame['wall_s']:.1f}s, {sub} subframes)")
     target = float(L.get("solve_target", cfg["sensor"]["target_bg_level"]))

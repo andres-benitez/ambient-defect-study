@@ -457,7 +457,13 @@ sup{font-size:.7em}
                 row = [TYPE_LABEL[t], z]
                 for cond in ["cam_a2A2448"] + part_conds:
                     r = summ_all[(summ_all.condition == cond) & (summ_all.type == t) & (summ_all.zone == z)]
-                    row.append(fmt_mm(r["min_detectable_mm"].iloc[0]) if len(r) and r["min_detectable"].iloc[0] != "none" else "none")
+                    if len(r) and r["min_detectable"].iloc[0] != "none":
+                        v = float(r["min_detectable_mm"].iloc[0])
+                        mmpx = float(resolve_condition(cfg, cond)["camera"]["mm_per_px"])
+                        width = v if t.startswith("pore") else (float(cfg["defects"][t].get("width_ratio", 1.0)) * v if t == "burr" else v)
+                        row.append(fmt_mm(v) + ("*" if width < mmpx else ""))
+                    else:
+                        row.append("none")
                 comp_rows.append(row)
         # depth and tilt of cast sites
         defs = load_defects(resolve_condition(cfg, part_conds[0]))
@@ -471,7 +477,7 @@ sup{font-size:.7em}
 </div>
 {table(["Condition", "Camera", "MP", "Pixel on part", "Lens", "Depth of field f/8", "Samples / px", "Checks"], part_rows, caption="Whole-part conditions. With the part filling the frame the pixels on the metal are coarser than on the 300 mm face, and the depth of field no longer covers the bays.")}
 {fig(F.get("contact_sheet_part_5mp.png"), "Contact sheet of the block defects, 5 MP", "The 48 defects on the block as the 5 MP camera sees them, 8× magnified. Left: cast sites in the bays. Right: machined sites on the flange.")}
-{table(["Defect", "Surface", "Test plate, 5 MP (123 µm/px)"] + [f"Block, {resolve_condition(cfg, pc)['camera']['model_info']['mp']:g} MP ({resolve_condition(cfg, pc)['camera']['mm_per_px']*1000:.0f} µm/px)" for pc in part_conds], comp_rows, caption="Smallest detectable size on the flat test plate against the whole engine block in one shot.")}
+{table(["Defect", "Surface", "Test plate, 5 MP (123 µm/px)"] + [f"Block, {resolve_condition(cfg, pc)['camera']['model_info']['mp']:g} MP ({resolve_condition(cfg, pc)['camera']['mm_per_px']*1000:.0f} µm/px)" for pc in part_conds], comp_rows, caption="Smallest detectable size on the flat test plate against the whole engine block in one shot. An asterisk marks a size narrower than one pixel: a result at the pixel limit that hangs on a few pixels.")}
 <aside class="box"><b>What the real part adds</b><div><ul>
 <li><b>Coarser pixels.</b> Fitting a {part["extent_mm"][0]:.0f} mm part into the frame makes each pixel cover more metal than on a 300 mm face, so the size floor rises by one step for most types.</li>
 <li><b>Depth of field.</b> The cast sites lie {abs(zs).min():.0f} to {abs(zs).max():.0f} mm below the focus plane; at f/8 only a few centimetres stay sharp, so the deepest sites are blurred before the sensor sees them. On a real line this is traded against exposure time and diffraction (Step 6).</li>

@@ -302,7 +302,9 @@ def main():
     cfg = load_config(a.config)
     thr = cfg["threshold"]
     df = pd.read_csv(a.metrics)
-    cams = [c for c, s in cfg["conditions"].items() if (s or {}).get("camera", {}).get("model") and c in set(df.condition)]
+    # camera comparison = the coupon at the 300 mm framing; whole-part conditions (asset kind part) are reported separately
+    cams = [c for c, s in cfg["conditions"].items() if (s or {}).get("camera", {}).get("model") and c in set(df.condition)
+            and (s or {}).get("asset", {}).get("kind", "coupon") != "part"]
     cams.sort(key=lambda c: cfg["cameras"][cfg["conditions"][c]["camera"]["model"]]["mp"])
     if not cams:
         raise SystemExit("no cam_* conditions in metrics.csv")

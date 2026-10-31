@@ -122,7 +122,7 @@ def main():
             off = float(np.hypot(cx + 0.5 - u, cy + 0.5 - v))
             d = layout[prim]
             height_mm = d.size_mm if d.type == "burr" else 0.0
-            parallax_px = height_mm * float(np.hypot(*d.center_mm)) / cam.distance_mm / cam.mm_per_px
+            parallax_px = height_mm * float(np.hypot(d.center_mm[0], d.center_mm[1])) / cam.distance_mm / cam.mm_per_px
             offsets.append(off)
             excess.append(off - parallax_px)
     max_off = max(offsets) if offsets else float("nan")
