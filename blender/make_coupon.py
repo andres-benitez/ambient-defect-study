@@ -29,7 +29,7 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from ads.config import load_config  # noqa: E402
-from ads.layout import build_layout, zone_extent_x  # noqa: E402
+from ads.layout import build_layout, zone_extent_x, is_round  # noqa: E402
 
 ZONE_MAT = {"cast": "M_cast", "machined": "M_machined"}
 PLATE_NAME = {"cast": "Coupon_Cast", "machined": "Coupon_Machined"}
@@ -221,7 +221,7 @@ def main():
                 continue
             cmat = get_material("C_" + d.prim)
             cutter_mat_to_prim[cmat.name] = d.prim
-            cutters.append(make_pore_cutter(d, cmat) if d.type.startswith("pore") else make_scratch_cutter(d, cmat))
+            cutters.append(make_pore_cutter(d, cmat) if is_round(d.type) else make_scratch_cutter(d, cmat))
         # one boolean per zone: join all cutters first (they never overlap)
         select_only(cutters)
         bpy.ops.object.join()

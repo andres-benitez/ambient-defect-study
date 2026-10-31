@@ -149,6 +149,8 @@ def main():
         common.save_npy(os.path.join(renders, f"hdr_{f}.npy"), fr["hdr"][..., :3].astype(np.float32))
         common.save_npy(os.path.join(renders, f"mask_{f}.npy"), fr["inst"].astype(np.uint32))
         common.save_npy(os.path.join(renders, f"zone_{f}.npy"), fr["sem"].astype(np.uint32))
+        if fr.get("depth") is not None and f == 0:
+            common.save_npy(os.path.join(renders, "depth_0.npy"), fr["depth"].astype(np.float32))
         if fr["inst_info"].get("idToLabels") != inst_map.get("idToLabels"):
             common.write_json(os.path.join(renders, f"id_map_{f}.json"), {"instance": fr["inst_info"], "semantic": fr["sem_info"]})
     common.write_json(os.path.join(renders, "id_map.json"), {"instance": inst_map, "semantic": frames[0]["sem_info"],

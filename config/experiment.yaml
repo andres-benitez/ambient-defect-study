@@ -83,17 +83,17 @@ camera:
 # "EMVA Data Overview" No. 16 and product pages; prices are indicative list prices seen 2026-10-31
 # (EUR where Basler lists them, otherwise converted from USD) and exclude the lens.
 cameras:
-  a2A1920-51gmBAS: {sensor: Sony IMX392, mp: 2.3, resolution: [1920, 1200], pixel_um: 3.45, format: '1/2.3"',
+  a2A1920-51gmBAS: {sensor: "Sony IMX392", mp: 2.3, resolution: [1920, 1200], pixel_um: 3.45, format: '1/2.3"',
                     shutter: global, full_well_e: 10500, read_noise_e: 3.0, qe: 0.62, adc_bits: 12, price_eur: 400}
-  a2A2448-23gmBAS: {sensor: Sony IMX547, mp: 5.0, resolution: [2448, 2048], pixel_um: 2.74, format: '1/1.8"',
+  a2A2448-23gmBAS: {sensor: "Sony IMX547", mp: 5.0, resolution: [2448, 2048], pixel_um: 2.74, format: '1/1.8"',
                     shutter: global, full_well_e: 9900, read_noise_e: 2.4, qe: 0.66, adc_bits: 12, price_eur: 700}
-  a2A3840-13gmBAS: {sensor: Sony IMX334, mp: 8.3, resolution: [3840, 2160], pixel_um: 2.0, format: '1/1.8"',
+  a2A3840-13gmBAS: {sensor: "Sony IMX334", mp: 8.3, resolution: [3840, 2160], pixel_um: 2.0, format: '1/1.8"',
                     shutter: rolling, readout_ms: 22, full_well_e: 7200, read_noise_e: 2.0, qe: 0.73, adc_bits: 12, price_eur: 420}
-  a2A4096-9gmBAS:  {sensor: Sony IMX545, mp: 12.3, resolution: [4096, 3000], pixel_um: 2.74, format: '1/1.1"',
+  a2A4096-9gmBAS:  {sensor: "Sony IMX545", mp: 12.3, resolution: [4096, 3000], pixel_um: 2.74, format: '1/1.1"',
                     shutter: global, full_well_e: 9900, read_noise_e: 3.0, qe: 0.67, adc_bits: 12, price_eur: 1150}
-  a2A4508-6gmBAS:  {sensor: Gpixel GMAX2518, mp: 18.5, resolution: [4508, 4096], pixel_um: 2.5, format: '1"',
+  a2A4508-6gmBAS:  {sensor: "Gpixel GMAX2518", mp: 18.5, resolution: [4508, 4096], pixel_um: 2.5, format: '1"',
                     shutter: global, full_well_e: 6700, read_noise_e: 3.0, qe: 0.56, adc_bits: 12, price_eur: 1100}
-  a2A5320-7gmBAS:  {sensor: Sony IMX542, mp: 16.1, resolution: [5320, 3032], pixel_um: 2.74, format: '1.1"',
+  a2A5320-7gmBAS:  {sensor: "Sony IMX542", mp: 16.1, resolution: [5320, 3032], pixel_um: 2.74, format: '1.1"',
                     shutter: global, full_well_e: 9700, read_noise_e: 2.0, qe: 0.66, adc_bits: 12, price_eur: 1500}
 
 framing:                         # used when camera.model is set
@@ -159,6 +159,7 @@ checks:
   max_saturated_frac: 0.001
   render_noise_frac: 0.20
   determinism_tol_frac: 0.02
+  enforce_exposure: true         # conditions with directional light or shadows set this false (their exposure is not an ambient one)
 
 # Conditions override the base config above (deep merge). `default: true` marks the one
 # `run_all.py` runs when no --condition is given; `control: true` keeps a condition out of the figures.
@@ -194,3 +195,51 @@ conditions:
     camera: {model: a2A4508-6gmBAS}
     framing: {fov_mm: 620}
     render: {frames_per_condition: 1}
+
+  # ---- experiment 1 + 2: dents and the scratch envelope (extended coupon, 9 rows x 6 sizes x 2 zones)
+  ext_nadir_012:
+    asset: {kind: coupon, dir: assets/coupon_ext, usd: coupon.usd, zone_prims: {cast: Coupon_Cast, machined: Coupon_Machined}}
+    coupon: {plate_mm: [120, 100, 10]}
+    defects:
+      dent_shallow: {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.03}   # 1 mm dent 30 um deep
+      dent_deep:    {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.10}   # 1 mm dent 100 um deep
+      scratch_l1:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 1, depth_ratio: 1.0}
+      scratch_l2:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 2, depth_ratio: 1.0}
+      scratch_l3:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 3, depth_ratio: 1.0}
+    render: {frames_per_condition: 1}
+  ext_nadir_005:
+    asset: {kind: coupon, dir: assets/coupon_ext, usd: coupon.usd, zone_prims: {cast: Coupon_Cast, machined: Coupon_Machined}}
+    coupon: {plate_mm: [120, 100, 10]}
+    defects:
+      dent_shallow: {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.03}   # 1 mm dent 30 um deep
+      dent_deep:    {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.10}   # 1 mm dent 100 um deep
+      scratch_l1:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 1, depth_ratio: 1.0}
+      scratch_l2:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 2, depth_ratio: 1.0}
+      scratch_l3:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 3, depth_ratio: 1.0}
+    camera: {mm_per_px: 0.05}
+    render: {frames_per_condition: 1}
+  # ---- experiment 3: one view per face, aperture and focus plane sweep (18.5 MP and 5 MP)
+  sv18_f56_mid: {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A4508-6gmBAS, f_number: 5.6, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  sv18_f8_mid:  {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A4508-6gmBAS, f_number: 8, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  sv18_f11_mid: {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A4508-6gmBAS, f_number: 11, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  sv18_f16_mid: {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A4508-6gmBAS, f_number: 16, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  sv18_f22_mid: {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A4508-6gmBAS, f_number: 22, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  sv5_f8_mid:   {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A2448-23gmBAS, f_number: 8, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  sv5_f16_mid:  {asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}, camera: {model: a2A2448-23gmBAS, f_number: 16, focus_offset_mm: 60}, framing: {fov_mm: 620}, render: {frames_per_condition: 1}}
+  # ---- experiment 5: lighting rigs as reported conditions (test plate, 0.12 mm/px)
+  rig_ring60:   {lighting: {mode: ring, ring: {n_lights: 8, elevation_deg: 60, angle_deg: 2.0}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  rig_ring30:   {lighting: {mode: ring, ring: {n_lights: 8, elevation_deg: 30, angle_deg: 2.0}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  rig_dome:     {lighting: {mode: dome}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  rig_dir_az0:   {lighting: {mode: directional, directional: {elevation_deg: 30, azimuth_deg: 0}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  rig_dir_az90:  {lighting: {mode: directional, directional: {elevation_deg: 30, azimuth_deg: 90}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  rig_dir_az180: {lighting: {mode: directional, directional: {elevation_deg: 30, azimuth_deg: 180}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  rig_dir_az270: {lighting: {mode: directional, directional: {elevation_deg: 30, azimuth_deg: 270}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  # ---- experiment 6: machined-face tool marks (anisotropic reflection along / across the scratches)
+  aniso_along:  {materials: {machined: {anisotropy: 0.6, anisotropy_rotation: 0.0}}, render: {frames_per_condition: 1}}
+  aniso_across: {materials: {machined: {anisotropy: 0.6, anisotropy_rotation: 0.25}}, render: {frames_per_condition: 1}}
+  # ---- experiment 8: camera pose tolerance
+  pose_tilt15: {camera: {view: oblique30, oblique_tilt_deg: 15}, render: {frames_per_condition: 1}}
+  pose_near:   {camera: {mm_per_px: 0.108}, render: {frames_per_condition: 1}}
+  pose_far:    {camera: {mm_per_px: 0.132}, render: {frames_per_condition: 1}}
+  # ---- experiment 9: a soft shadow from a fixture across the part
+  shadow_012: {lighting: {occluder: {size_m: [0.6, 0.6, 0.02], position_m: [0.35, 0.0, 1.0]}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}

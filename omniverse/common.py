@@ -155,7 +155,8 @@ class Annotators:
         self.inst = rep.AnnotatorRegistry.get_annotator("instance_segmentation", init_params={"colorize": False})
         self.sem = rep.AnnotatorRegistry.get_annotator("semantic_segmentation", init_params={"colorize": False})
         self.ldr = rep.AnnotatorRegistry.get_annotator("LdrColor") if with_ldr else None
-        for a in (self.hdr, self.inst, self.sem, self.ldr):
+        self.depth = rep.AnnotatorRegistry.get_annotator("distance_to_image_plane")
+        for a in (self.hdr, self.inst, self.sem, self.ldr, self.depth):
             if a is not None:
                 a.attach(render_product)
 
@@ -178,10 +179,14 @@ class Annotators:
         }
         if self.ldr is not None:
             out["ldr"] = np.asarray(self.ldr.get_data())
+        try:
+            out["depth"] = np.asarray(self.depth.get_data(), dtype=np.float32)
+        except Exception:  # noqa: BLE001
+            out["depth"] = None
         return out
 
     def detach(self):
-        for a in (self.hdr, self.inst, self.sem, self.ldr):
+        for a in (self.hdr, self.inst, self.sem, self.ldr, self.depth):
             if a is not None:
                 try:
                     a.detach(self.rp)

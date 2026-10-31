@@ -22,10 +22,10 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
 from ads.config import load_config  # noqa: E402
-from ads.layout import build_layout, load_defects, asset_paths  # noqa: E402
+from ads.layout import build_layout, load_defects, asset_paths, is_round  # noqa: E402
 from ads.camera import build_camera, project_mm  # noqa: E402
 from analysis.sensor_model import luminance, solve_gain, simulate, to_uint8, expected_noise_std  # noqa: E402
-from analysis.metrics import measure_defect, dilate  # noqa: E402
+from analysis.metrics import measure_defect, dilate, footprint_region  # noqa: E402
 from analysis.io_utils import load_hdr, tonemap_preview, write_png, convert_npy_renders_to_exr  # noqa: E402
 from analysis.render_noise import flat_patch_std  # noqa: E402
 from analysis.optics import scenario_psf, apply_psf  # noqa: E402
@@ -78,7 +78,7 @@ def main():
     def fail(name, msg):
         checks.setdefault(name, {})
         checks[name].update({"pass": False, "detail": msg})
-        if args.no_checks or (is_control and name == "exposure"):
+        if args.no_checks or (name == "exposure" and (is_control or not cfg["checks"].get("enforce_exposure", True))):
             print(f"[compute_cnr] WARN {name} ({'expected for a control condition' if is_control else 'ignored'}): {msg}")
         else:
             raise SystemExit(f"[compute_cnr] FAIL {name}: {msg}")
@@ -100,9 +100,21 @@ def main():
 
     # mask check: every defect that should cover >= 1 px appears in the id map
     centers = {prim: project_mm(cam, np.array([d.center3_mm]))[0] for prim, d in layout.items()}
+    # projected footprint for defects without a mask (sub-pixel): a line of the defect's length for
+    # scratches and burrs, a disc-sized square for round defects, never smaller than 3 x 3 px
+    footprints = {}
+    for prim, d in layout.items():
+        if defect_masks[prim].any():
+            continue
+        if is_round(d.type):
+            lpx = wpx = d.size_mm / cam.mm_per_px
+        else:
+            lpx, wpx = (d.length_mm or d.size_mm) / cam.mm_per_px, (d.width_mm or d.size_mm) / cam.mm_per_px
+        footprints[prim] = footprint_region(inst0.shape, centers[prim], lpx, wpx, int(an.get("fallback_window_px", 3)))
+        dilated[prim] = dilate(footprints[prim], dil + 1)
     missing_big = []
     for prim, d in layout.items():
-        footprint_px = (d.size_mm if d.type.startswith("pore") else max(d.width_mm, 0) ) / cam.mm_per_px
+        footprint_px = (d.size_mm if is_round(d.type) else max(d.width_mm, 0)) / cam.mm_per_px
         if prim not in id_map["prim_to_ids"] and footprint_px >= 2.0:
             missing_big.append(prim)
     if missing_big:
@@ -115,7 +127,7 @@ def main():
     offsets, excess = [], []
     for prim, m in defect_masks.items():
         d0 = layout[prim]
-        width_px = (d0.size_mm if d0.type.startswith("pore") else d0.width_mm) / cam.mm_per_px
+        width_px = (d0.size_mm if is_round(d0.type) else d0.width_mm) / cam.mm_per_px
         if m.sum() >= 9 and width_px >= 2.0:
             cy, cx = ndimage.center_of_mass(m)
             u, v = centers[prim]
@@ -144,6 +156,9 @@ def main():
     if noise["ratio"] > float(chk["render_noise_frac"]):
         fail("render_noise", f"render noise {noise['std']:.5f} is {noise['ratio']:.2f}x the sensor noise (limit {chk['render_noise_frac']})")
 
+    all_defects_dil = np.zeros(inst0.shape, bool)
+    for m_ in dilated.values():
+        all_defects_dil |= m_
     rows = []
     rng_base = int(cfg["seed"])
     plate_mask = zone_masks["cast"] | zone_masks["machined"] | defect_class
@@ -188,7 +203,8 @@ def main():
             for prim, d in layout.items():
                 others = all_defects_dil & ~dilated[prim]
                 try:
-                    r = measure_defect(sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim])
+                    r = measure_defect(sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim],
+                                       fallback_region=footprints.get(prim))
                 except ValueError as exc:
                     r = {"area_px": int(defect_masks[prim].sum()), "n_bg_px": 0, "mean_in": np.nan, "mean_bg": np.nan, "std_bg": np.nan,
                          "cnr": np.nan, "cnr_peak": np.nan, "weber": np.nan, "detectable": False, "marginal": False, "mask_empty": True,
@@ -264,13 +280,22 @@ def main():
     write_png(os.path.join(out_dir, "mask_overlay.png"), crop)
     checks["masks"]["overlay"] = os.path.relpath(os.path.join(out_dir, "mask_overlay.png"), REPO_ROOT)
 
-    # ---- append to metrics.csv (replace rows of this condition)
+    # ---- append to metrics.csv (replace rows of this condition) under a file lock, since the render
+    # queue and re-analyses may write concurrently
+    import fcntl
+
     os.makedirs(os.path.dirname(args.metrics), exist_ok=True)
-    if os.path.exists(args.metrics):
-        old = pd.read_csv(args.metrics)
-        old = old[old["condition"] != cond]
-        df = pd.concat([old, df], ignore_index=True)
-    df.to_csv(args.metrics, index=False)
+    lock_path = args.metrics + ".lock"
+    with open(lock_path, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if os.path.exists(args.metrics):
+            old = pd.read_csv(args.metrics)
+            old = old[old["condition"] != cond]
+            df = pd.concat([old, df], ignore_index=True)
+        tmp = args.metrics + ".tmp"
+        df.to_csv(tmp, index=False)
+        os.replace(tmp, args.metrics)
+        fcntl.flock(lock, fcntl.LOCK_UN)
     with open(os.path.join(out_dir, "analysis_checks.json"), "w") as fh:
         json.dump(checks, fh, indent=1, default=float)
     this = df[(df["condition"] == cond) & (df["lens"] == default_lens)]

@@ -37,11 +37,27 @@ def fallback_window(shape, center_uv, size_px: int) -> np.ndarray:
     return m
 
 
+def footprint_region(shape, center_uv, length_px: float, width_px: float, min_px: int = 3) -> np.ndarray:
+    """Axis-aligned rectangle (length along u, width along v) centred on (u, v), at least min_px wide
+    in each direction: the projected footprint of a defect whose mask is empty."""
+    h, w = shape[:2]
+    lu = max(int(round(length_px)), min_px)
+    lv = max(int(round(width_px)), min_px)
+    cu, cv = int(np.floor(center_uv[0])), int(np.floor(center_uv[1]))
+    m = np.zeros((h, w), bool)
+    u0, u1 = max(cu - lu // 2, 0), min(cu - lu // 2 + lu, w)
+    v0, v1 = max(cv - lv // 2, 0), min(cv - lv // 2 + lv, h)
+    if u1 > u0 and v1 > v0:
+        m[v0:v1, u0:u1] = True
+    return m
+
+
 def measure_defect(img: np.ndarray, mask: np.ndarray, zone_mask: np.ndarray, exclude_mask: np.ndarray,
-                   cfg_analysis: dict, cfg_threshold: dict, fallback_center_uv=None) -> dict:
+                   cfg_analysis: dict, cfg_threshold: dict, fallback_center_uv=None, fallback_region=None) -> dict:
     """img: simulated image in [0,1]; mask: this defect's pixels; zone_mask: pixels of the defect's
-    zone; exclude_mask: union of every *other* defect's dilated mask. If `mask` is empty, a
-    fallback window around `fallback_center_uv` is used and mask_empty is set."""
+    zone; exclude_mask: union of every *other* defect's dilated mask. If `mask` is empty, the
+    `fallback_region` (the defect's projected footprint) or, failing that, a window around
+    `fallback_center_uv` is used and mask_empty is set."""
     r_in, r_out = (int(v) for v in cfg_analysis["bg_annulus_px"])
     dil = int(cfg_analysis.get("mask_dilate_px", 1))
     mask = mask.astype(bool)
@@ -49,9 +65,12 @@ def measure_defect(img: np.ndarray, mask: np.ndarray, zone_mask: np.ndarray, exc
     mask_empty = area == 0
     region = mask
     if mask_empty:
-        if fallback_center_uv is None:
+        if fallback_region is not None and fallback_region.any():
+            region = fallback_region.astype(bool)
+        elif fallback_center_uv is not None:
+            region = fallback_window(img.shape, fallback_center_uv, int(cfg_analysis.get("fallback_window_px", 3)))
+        else:
             raise ValueError("empty mask and no fallback centre")
-        region = fallback_window(img.shape, fallback_center_uv, int(cfg_analysis.get("fallback_window_px", 3)))
     # work on a crop around the region: the annulus never reaches further than r_out + dil pixels
     ys, xs = np.where(region)
     margin = r_out + dil + 2

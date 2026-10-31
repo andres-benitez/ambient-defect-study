@@ -30,7 +30,8 @@ from ads.camera import build_camera, project_mm  # noqa: E402
 COLORS = {"cast": "#2a78d6", "machined": "#eb6834"}
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#fcfcfb"
 FAMILY_TITLES = {"pore": "Pores (opening diameter)", "scratch": "Scratches (width)", "burr": "Burrs (height)"}
-SIZE_LABEL = {"pore_shallow": "diameter", "pore_deep": "diameter", "scratch": "width", "burr": "height"}
+SIZE_LABEL = {"pore_shallow": "diameter", "pore_deep": "diameter", "dent_shallow": "diameter", "dent_deep": "diameter",
+              "scratch": "width", "scratch_l1": "width", "scratch_l2": "width", "scratch_l3": "width", "burr": "height"}
 
 
 def parse_args():

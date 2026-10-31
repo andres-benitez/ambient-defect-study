@@ -31,6 +31,7 @@ def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=os.path.join(REPO_ROOT, "config", "experiment.yaml"))
     ap.add_argument("--assets", default=os.path.join(REPO_ROOT, "assets", "coupon"))
+    ap.add_argument("--condition", default=None)
     return ap.parse_args(argv)
 
 
@@ -58,7 +59,7 @@ def is_watertight(bm):
 
 def main():
     args = parse_args()
-    cfg = load_config(args.config)
+    cfg = load_config(args.config, args.condition)
     layout = build_layout(cfg)
     chk = cfg["checks"]
     blend = os.path.join(args.assets, "coupon.blend")

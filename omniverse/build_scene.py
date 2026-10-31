@@ -227,23 +227,53 @@ def main():
         dome.CreateTextureFormatAttr(UsdLux.Tokens.latlong)
         UsdGeom.Xformable(dome.GetPrim()).AddRotateZOp().Set(float(hp.get("rotation_deg", 0)))
         light_prims["dome"] = dome
-    elif mode == "directional":
-        dp = L["directional"]
-        el, az = math.radians(float(dp["elevation_deg"])), math.radians(float(dp["azimuth_deg"]))
-        s = Gf.Vec3d(math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), math.sin(el))  # towards the light
-        x = Gf.Cross(Gf.Vec3d(0, 0, 1), s).GetNormalized()
-        y = Gf.Cross(s, x).GetNormalized()
-        m = Gf.Matrix4d(1.0)
-        m.SetRow(0, Gf.Vec4d(x[0], x[1], x[2], 0))
-        m.SetRow(1, Gf.Vec4d(y[0], y[1], y[2], 0))
-        m.SetRow(2, Gf.Vec4d(s[0], s[1], s[2], 0))  # light's +Z points at the light; it emits along -Z
-        dist = UsdLux.DistantLight.Define(stage, "/World/Lights/Directional")
-        dist.CreateIntensityAttr(initial_intensity)
-        dist.CreateAngleAttr(float(dp.get("angle_deg", 0.5)))
-        UsdGeom.Xformable(dist.GetPrim()).AddTransformOp().Set(m)
-        light_prims["directional"] = dist
+    elif mode in ("directional", "ring"):
+        def distant(path, el_deg, az_deg, intensity, angle):
+            el, az = math.radians(el_deg), math.radians(az_deg)
+            s = Gf.Vec3d(math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), math.sin(el))  # towards the light
+            x = Gf.Cross(Gf.Vec3d(0, 0, 1), s).GetNormalized()
+            y = Gf.Cross(s, x).GetNormalized()
+            m = Gf.Matrix4d(1.0)
+            m.SetRow(0, Gf.Vec4d(x[0], x[1], x[2], 0))
+            m.SetRow(1, Gf.Vec4d(y[0], y[1], y[2], 0))
+            m.SetRow(2, Gf.Vec4d(s[0], s[1], s[2], 0))  # light's +Z points at the light; it emits along -Z
+            dl = UsdLux.DistantLight.Define(stage, path)
+            dl.CreateIntensityAttr(intensity)
+            dl.CreateAngleAttr(angle)
+            UsdGeom.Xformable(dl.GetPrim()).AddTransformOp().Set(m)
+            return dl
+
+        if mode == "directional":
+            dp = L["directional"]
+            light_prims["directional"] = distant("/World/Lights/Directional", float(dp["elevation_deg"]), float(dp["azimuth_deg"]),
+                                                 initial_intensity, float(dp.get("angle_deg", 0.5)))
+        else:  # ring: n distant lights around the camera axis at one elevation (a segmented ring light)
+            rp_ = L["ring"]
+            n = int(rp_.get("n_lights", 8))
+            for k in range(n):
+                light_prims[f"ring_{k}"] = distant(f"/World/Lights/Ring_{k}", float(rp_["elevation_deg"]), 360.0 * k / n,
+                                                   initial_intensity / n, float(rp_.get("angle_deg", 2.0)))
+    elif mode == "dome":  # uniform dome only: the softest possible light
+        dome = UsdLux.DomeLight.Define(stage, "/World/Lights/Dome")
+        dome.CreateIntensityAttr(initial_intensity)
+        dome.CreateColorAttr(Gf.Vec3f(1, 1, 1))
+        dome.CreateTextureFormatAttr(UsdLux.Tokens.latlong)
+        light_prims["dome"] = dome
     else:
         raise RuntimeError(f"unknown lighting.mode {mode!r}")
+    occ = L.get("occluder")
+    if occ:  # a dark plate between the ceiling and the part, casting a soft shadow across it
+        ow, oh, ot = (float(v) for v in occ["size_m"])
+        ox, oy, oz = (float(v) for v in occ["position_m"])
+        occ_mesh = UsdGeom.Cube.Define(stage, "/World/Occluder")
+        occ_mesh.CreateSizeAttr(1.0)
+        xf_o = UsdGeom.Xformable(occ_mesh.GetPrim())
+        xf_o.AddTranslateOp().Set(Gf.Vec3d(ox, oy, oz))
+        xf_o.AddScaleOp().Set(Gf.Vec3f(ow, oh, ot))
+        occ_mat, occ_sh = mdl_material("/World/Looks/Occluder", "OmniPBR.mdl", "OmniPBR")
+        set_input(occ_sh, "diffuse_color_constant", Gf.Vec3f(0.2, 0.2, 0.2), Sdf.ValueTypeNames.Color3f)
+        set_input(occ_sh, "reflection_roughness_constant", 0.9, Sdf.ValueTypeNames.Float)
+        bind(occ_mesh.GetPrim(), occ_mat)
 
     # ---- camera
     usd_cam = UsdGeom.Camera.Define(stage, "/World/Camera")
@@ -251,7 +281,8 @@ def main():
     usd_cam.CreateHorizontalApertureAttr(cam.sensor_width_mm)
     usd_cam.CreateVerticalApertureAttr(cam.sensor_height_mm)
     usd_cam.CreateFStopAttr(float(cfg["camera"].get("f_number", 8)))
-    usd_cam.CreateFocusDistanceAttr(cam.distance_mm / 1000.0)
+    focus_offset = float(cfg["camera"].get("focus_offset_mm", 0.0))  # > 0: focus plane below the reference plane
+    usd_cam.CreateFocusDistanceAttr((cam.distance_mm + focus_offset) / 1000.0)
     usd_cam.CreateClippingRangeAttr(Gf.Vec2f(0.01, 100.0))
     xf = UsdGeom.Xformable(usd_cam.GetPrim())
     xf.AddTranslateOp().Set(Gf.Vec3d(*cam.position_m))
@@ -354,7 +385,7 @@ def main():
         "condition": cond,
         "control": cfg["condition"]["control"],
         "scene_usd": os.path.relpath(scene_path, REPO_ROOT),
-        "camera": cam.to_dict(),
+        "camera": {**cam.to_dict(), "f_number": float(cfg["camera"].get("f_number", 8)), "focus_offset_mm": focus_offset},
         "lighting_mode": mode,
         "solved_intensity": solved,
         "solve": {"probe_spp": probe_spp, "bg_mean_before": mean0, "bg_mean_after": mean1, "target": target, "factor": factor},

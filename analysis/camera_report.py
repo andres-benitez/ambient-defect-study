@@ -58,7 +58,7 @@ def min_detectable(df: pd.DataFrame, thr: dict) -> pd.DataFrame:
     """Per (condition, lens, zone, type): smallest detectable size, medians over frames."""
     df = df.copy()
     # footprint across the defect in pixels: pore diameter, scratch width, burr base width
-    df["footprint_px"] = np.where(df["type"].str.startswith("pore"), df["size_mm"], df["width_mm"].fillna(df["size_mm"])) / df["mm_per_px"]
+    df["footprint_px"] = np.where(df["type"].str.startswith(("pore", "dent")), df["size_mm"], df["width_mm"].fillna(df["size_mm"])) / df["mm_per_px"]
     g = df.groupby(["condition", "lens", "zone", "type", "size_mm"]).agg(cnr=("cnr", "median"), area_px=("area_px", "median"),
                                                                         footprint_px=("footprint_px", "first")).reset_index()
     g["det"] = (g["cnr"] >= float(thr["cnr"])) & (g["area_px"] >= int(thr["min_area_px"]))

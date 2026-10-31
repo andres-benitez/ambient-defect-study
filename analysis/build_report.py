@@ -29,8 +29,11 @@ from analysis.plot_results import summarise  # noqa: E402
 from analysis.optics import scenario_psf  # noqa: E402
 from analysis.photometry import exposure_ms  # noqa: E402
 
-TYPE_LABEL = {"pore_shallow": "shallow pore", "pore_deep": "deep pore", "scratch": "scratch (5 mm long)", "burr": "burr (5 mm long)"}
-SIZE_LABEL = {"pore_shallow": "diameter", "pore_deep": "diameter", "scratch": "width", "burr": "height"}
+TYPE_LABEL = {"pore_shallow": "shallow pore", "pore_deep": "deep pore", "dent_shallow": "shallow dent", "dent_deep": "deeper dent",
+              "scratch": "scratch (5 mm long)", "scratch_l1": "scratch (1 mm long)", "scratch_l2": "scratch (2 mm long)", "scratch_l3": "scratch (3 mm long)",
+              "burr": "burr (5 mm long)"}
+SIZE_LABEL = {"pore_shallow": "diameter", "pore_deep": "diameter", "dent_shallow": "diameter", "dent_deep": "diameter",
+              "scratch": "width", "scratch_l1": "width", "scratch_l2": "width", "scratch_l3": "width", "burr": "height"}
 
 
 def parse_args():
@@ -460,7 +463,7 @@ sup{font-size:.7em}
                     if len(r) and r["min_detectable"].iloc[0] != "none":
                         v = float(r["min_detectable_mm"].iloc[0])
                         mmpx = float(resolve_condition(cfg, cond)["camera"]["mm_per_px"])
-                        width = v if t.startswith("pore") else (float(cfg["defects"][t].get("width_ratio", 1.0)) * v if t == "burr" else v)
+                        width = v if t.startswith(("pore", "dent")) else (float(cfg["defects"][t].get("width_ratio", 1.0)) * v if t == "burr" else v)
                         row.append(fmt_mm(v) + ("*" if width < mmpx else ""))
                     else:
                         row.append("none")

@@ -9,7 +9,12 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from typing import List
 
-ROW_ORDER = ["pore_shallow", "pore_deep", "scratch", "burr"]
+ROW_ORDER = ["pore_shallow", "pore_deep", "dent_shallow", "dent_deep", "scratch", "scratch_l1", "scratch_l2", "scratch_l3", "burr"]
+ROUND_TYPES = ("pore", "dent")  # round cavities: size = opening diameter, depth = depth_ratio x size
+
+
+def is_round(dtype: str) -> bool:
+    return dtype.startswith(ROUND_TYPES)
 ZONE_SHORT = {"cast": "cast", "machined": "mach"}
 
 
@@ -51,9 +56,9 @@ def defect_name(zone: str, dtype: str, size_mm: float) -> str:
 
 
 def size_list(dcfg: dict, dtype: str) -> list:
-    if dtype.startswith("pore"):
+    if is_round(dtype):
         return list(dcfg[dtype]["diam_mm"])
-    if dtype == "scratch":
+    if dtype.startswith("scratch"):
         return list(dcfg[dtype]["width_mm"])
     if dtype == "burr":
         return list(dcfg[dtype]["height_mm"])
@@ -94,10 +99,10 @@ def build_layout(cfg: dict) -> List[Defect]:
                 if not (xmin + margin - 1e-9 <= x <= xmax - margin + 1e-9) or abs(y) > plate_h / 2 - margin + 1e-9:
                     raise ValueError(f"defect {dtype} size {s} at ({x},{y}) violates the {margin} mm margin")
                 spec = dcfg[dtype]
-                if dtype.startswith("pore"):
+                if is_round(dtype):
                     depth = float(spec["depth_ratio"]) * s
                     length, width = None, None
-                elif dtype == "scratch":
+                elif dtype.startswith("scratch"):
                     depth = float(spec["depth_ratio"]) * s
                     length, width = float(spec["length_mm"]), s
                 else:  # burr: size is height, "depth" is the height above the surface (positive)

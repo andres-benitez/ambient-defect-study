@@ -28,7 +28,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 from ads.config import load_config  # noqa: E402
-from ads.layout import ROW_ORDER, size_list, defect_name, Defect  # noqa: E402
+from ads.layout import ROW_ORDER, size_list, defect_name, Defect, is_round  # noqa: E402
 from blender.make_coupon import (get_material, new_object, select_only, prism_along_x, finalize_mesh,  # noqa: E402
                                  apply_boolean, separate_by_material, CUTTER_ABOVE_MM)
 
@@ -99,12 +99,17 @@ def face_arrays(me):
     return N, A, C
 
 
-def find_machined_plane(me, normal_tol_deg: float, band_mm: float):
-    """Largest planar region among the six axis directions: returns (axis unit vector, offset d, face mask, area)."""
+AXES = {"+z": (0, 0, 1), "-z": (0, 0, -1), "+y": (0, 1, 0), "-y": (0, -1, 0), "+x": (1, 0, 0), "-x": (-1, 0, 0)}
+
+
+def find_machined_plane(me, normal_tol_deg: float, band_mm: float, prefer_axis: str | None = None):
+    """Largest planar region among the six axis directions (or the one named by `prefer_axis`, in the
+    source mesh frame): returns (axis unit vector, offset d, face mask, area)."""
     N, A, C = face_arrays(me)
     best = None
     cos_tol = math.cos(math.radians(normal_tol_deg))
-    for axis in [(0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0), (-1, 0, 0)]:
+    axes = [AXES[prefer_axis]] if prefer_axis else list(AXES.values())
+    for axis in axes:
         ax = np.array(axis, float)
         sel = (N @ ax) > cos_tol
         if sel.sum() < 10:
@@ -289,9 +294,9 @@ def build_defect_list(cfg, sites) -> list:
                 x, y, z, n = sites[zone][k]
                 k += 1
                 spec = dcfg[dtype]
-                if dtype.startswith("pore"):
+                if is_round(dtype):
                     depth, length, width = float(spec["depth_ratio"]) * s, None, None
-                elif dtype == "scratch":
+                elif dtype.startswith("scratch"):
                     depth, length, width = float(spec["depth_ratio"]) * s, float(spec["length_mm"]), s
                 else:
                     depth, length, width = s, float(spec["length_mm"]), float(spec["width_ratio"]) * s
@@ -456,7 +461,7 @@ def carve_zone(ob, items, zone_mat, margin_mm: float) -> dict:
         M = Matrix.Translation(Vector(d.center_mm)) @ local_frame(nrm)
         R = np.array(M.to_3x3())
         local = (C - np.array(d.center_mm)) @ R
-        if d.type.startswith("pore"):
+        if is_round(d.type):
             base_hx = base_hy = d.size_mm / 2.0
             verts, faces, rim = cup_mesh(d)
         else:
@@ -573,7 +578,7 @@ def carve_zone(ob, items, zone_mat, margin_mm: float) -> dict:
     for d, nrm in items:
         M = Matrix.Translation(Vector(d.center_mm)) @ local_frame(nrm)
         local = (C2 - np.array(d.center_mm)) @ np.array(M.to_3x3())
-        if d.type.startswith("pore"):
+        if is_round(d.type):
             inside = (np.hypot(local[:, 0], local[:, 1]) < 0.8 * d.size_mm / 2.0) & (np.abs(local[:, 2]) < 1.0)
         else:
             inside = (np.abs(local[:, 0]) < 0.8 * d.length_mm / 2.0) & (np.abs(local[:, 1]) < 0.8 * d.width_mm / 2.0) & (np.abs(local[:, 2]) < 1.0)
@@ -608,7 +613,7 @@ def main():
 
     # ---- machined plane -> rotate so it is horizontal at z = 0, long axis along x
     mach = pc["machined"]
-    n, d0, mask, area = find_machined_plane(part.data, float(mach["normal_tol_deg"]), float(mach["plane_band_mm"]))
+    n, d0, mask, area = find_machined_plane(part.data, float(mach["normal_tol_deg"]), float(mach["plane_band_mm"]), mach.get("prefer_axis"))
     log(f"machined plane normal {np.round(n, 3)} offset {d0:.2f} mm, area {area:.0f} mm2, {int(mask.sum())} faces")
     R = rotation_to_z(n)
     part.data.transform(R)
