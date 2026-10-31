@@ -28,8 +28,21 @@ class Defect:
 
     def to_record(self) -> dict:
         d = asdict(self)
-        d["center_mm"] = [round(self.center_mm[0], 6), round(self.center_mm[1], 6)]
+        d["center_mm"] = [round(float(v), 6) for v in self.center_mm]
         return d
+
+    @property
+    def center3_mm(self) -> List[float]:
+        """3-D centre (z = 0 for coupon defects, whose records carry only x, y)."""
+        c = list(self.center_mm)
+        return c + [0.0] * (3 - len(c)) if len(c) < 3 else c[:3]
+
+    @classmethod
+    def from_record(cls, r: dict) -> "Defect":
+        return cls(prim=r["prim"], zone=r["zone"], type=r["type"], size_mm=float(r["size_mm"]), depth_mm=float(r["depth_mm"]),
+                   length_mm=None if r.get("length_mm") is None else float(r["length_mm"]),
+                   width_mm=None if r.get("width_mm") is None else float(r["width_mm"]),
+                   center_mm=[float(v) for v in r["center_mm"]], row=int(r.get("row", 0)), col=int(r.get("col", 0)))
 
 
 def defect_name(zone: str, dtype: str, size_mm: float) -> str:
@@ -105,6 +118,42 @@ def build_layout(cfg: dict) -> List[Defect]:
                     )
                 )
     return out
+
+
+def asset_paths(cfg: dict) -> dict:
+    """Absolute paths of the asset files named in cfg['asset'] (defaults to the coupon)."""
+    import os
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    a = cfg.get("asset", {}) or {}
+    d = os.path.join(root, a.get("dir", "assets/coupon"))
+    return {"dir": d, "usd": os.path.join(d, a.get("usd", "coupon.usd")), "defects": os.path.join(d, a.get("defects", "defects.json")),
+            "part_json": os.path.join(d, a.get("part_json", "part.json")),
+            "zone_prims": dict(a.get("zone_prims", {"cast": "Coupon_Cast", "machined": "Coupon_Machined"})), "kind": a.get("kind", "coupon")}
+
+
+def load_defects(cfg: dict) -> List[Defect]:
+    """Defects of the configured asset from its defects.json; falls back to the coupon layout."""
+    import json, os
+
+    path = asset_paths(cfg)["defects"]
+    if os.path.exists(path):
+        with open(path) as fh:
+            return [Defect.from_record(r) for r in json.load(fh)]
+    return build_layout(cfg)
+
+
+def load_part_info(cfg: dict) -> dict:
+    """part.json of the asset (extent, zone prims, source); synthesised for a coupon without one."""
+    import json, os
+
+    paths = asset_paths(cfg)
+    if os.path.exists(paths["part_json"]):
+        with open(paths["part_json"]) as fh:
+            return json.load(fh)
+    w, h, t = (float(v) for v in cfg["coupon"]["plate_mm"])
+    return {"kind": "coupon", "extent_mm": [w, h, t], "bbox_min_mm": [-w / 2, -h / 2, -t], "bbox_max_mm": [w / 2, h / 2, 0.0],
+            "zone_prims": paths["zone_prims"], "reference_plane_z_mm": 0.0}
 
 
 if __name__ == "__main__":

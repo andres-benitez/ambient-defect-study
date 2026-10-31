@@ -23,7 +23,7 @@ import pandas as pd  # noqa: E402
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 from ads.config import load_config, resolve_condition, config_json  # noqa: E402
-from ads.layout import build_layout, ROW_ORDER  # noqa: E402
+from ads.layout import build_layout, load_defects, ROW_ORDER  # noqa: E402
 from ads.camera import build_camera, project_mm  # noqa: E402
 
 # Palette (validated default, see dataviz reference): cast = slot 1 blue, machined = slot 2 orange
@@ -150,7 +150,7 @@ def contact_sheet(cfg: dict, cond_dir: str, agg: pd.DataFrame, path: str, cond: 
     half_mm = float(cfg["analysis"].get("contact_crop_mm", 3.0))
     zoom = int(cfg["analysis"].get("contact_zoom", 8))
     half_px = max(int(round(half_mm / cam.mm_per_px)), 4)
-    layout = build_layout(cfg)
+    layout = load_defects(cfg)
     zones = list(cfg["coupon"]["zones"])
     types = [t for t in ROW_ORDER if t in cfg["defects"]]
     ncol = max(d.col for d in layout) + 1
@@ -161,7 +161,7 @@ def contact_sheet(cfg: dict, cond_dir: str, agg: pd.DataFrame, path: str, cond: 
     axes = np.atleast_2d(axes)
     by_prim = agg.set_index("prim") if "prim" in agg.columns else None
     for d in layout:
-        u, v = project_mm(cam, np.array([[d.center_mm[0], d.center_mm[1], 0.0]]))[0]
+        u, v = project_mm(cam, np.array([d.center3_mm]))[0]
         cu, cv = int(round(u)), int(round(v))
         crop = sim[max(cv - half_px, 0):cv + half_px, max(cu - half_px, 0):cu + half_px]
         zi = zones.index(d.zone)
@@ -254,6 +254,9 @@ def main():
     cfg = load_config(args.config)
     thr = cfg["threshold"]
     df = pd.read_csv(args.metrics)
+    if "lens" in df.columns:  # the main report uses rows without optics (comparable with earlier runs)
+        default_lens = cfg.get("lens", {}).get("default_scenario", "none")
+        df = df[df["lens"].fillna(default_lens) == default_lens]
     agg_all, summ_all = summarise(df, thr)
     os.makedirs(args.out, exist_ok=True)
     agg_all.to_csv(os.path.join(args.out, "summary_per_defect.csv"), index=False)

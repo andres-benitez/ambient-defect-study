@@ -163,7 +163,42 @@ def resolve_condition(cfg: dict, condition: str | None) -> dict:
     meta = {"name": name, "control": bool(spec.pop("control", False)), "default": bool(spec.pop("default", False))}
     merged = deep_merge({k: v for k, v in cfg.items() if k != "conditions"}, spec)
     merged["condition"] = meta
+    apply_camera_model(merged)
     return merged
+
+
+def apply_camera_model(cfg: dict) -> dict:
+    """If camera.model names an entry of `cameras`, derive the camera block (resolution, sensor
+    width, pixel scale, focal length) from the catalogue and the `framing` block, and take the
+    sensor noise figures (full well, read noise) from the catalogue. Returns cfg (mutated)."""
+    cam = cfg.get("camera", {})
+    model = cam.get("model")
+    if not model:
+        return cfg
+    cat = cfg.get("cameras", {})
+    if model not in cat:
+        raise KeyError(f"camera.model {model!r} not in cameras: {sorted(cat)}")
+    spec = cat[model]
+    res = [int(v) for v in spec["resolution"]]
+    pixel_um = float(spec["pixel_um"])
+    sensor_w = res[0] * pixel_um / 1000.0
+    framing = cfg.get("framing", {"mode": "fov", "fov_mm": 300, "working_distance_mm": 800})
+    if framing.get("mode", "fov") == "fov":
+        fov = float(framing["fov_mm"])
+        mm_per_px = fov / res[0]
+        distance = float(framing["working_distance_mm"])
+        focal = distance * sensor_w / fov
+    else:  # fixed pixel scale and focal length: distance follows (the original convention)
+        mm_per_px = float(cam["mm_per_px"])
+        focal = float(cam["focal_length_mm"])
+    cam.update({"resolution": res, "sensor_width_mm": sensor_w, "pixel_um": pixel_um, "mm_per_px": mm_per_px,
+                "focal_length_mm": focal, "model_info": dict(spec)})
+    sensor = cfg.setdefault("sensor", {})
+    sensor["full_well_e"] = float(spec["full_well_e"])
+    sensor["read_noise_e"] = float(spec["read_noise_e"])
+    sensor["qe"] = float(spec.get("qe", 0.6))
+    sensor["camera_model"] = model
+    return cfg
 
 
 def load_config(path: str, condition: str | None = None) -> dict:

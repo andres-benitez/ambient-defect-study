@@ -22,12 +22,13 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
 from ads.config import load_config  # noqa: E402
-from ads.layout import build_layout  # noqa: E402
+from ads.layout import build_layout, load_defects, asset_paths  # noqa: E402
 from ads.camera import build_camera, project_mm  # noqa: E402
 from analysis.sensor_model import luminance, solve_gain, simulate, to_uint8, expected_noise_std  # noqa: E402
 from analysis.metrics import measure_defect, dilate  # noqa: E402
 from analysis.io_utils import load_hdr, tonemap_preview, write_png, convert_npy_renders_to_exr  # noqa: E402
 from analysis.render_noise import flat_patch_std  # noqa: E402
+from analysis.optics import scenario_psf, apply_psf  # noqa: E402
 
 ZONE_CLASS = {"cast": "zone_cast", "machined": "zone_machined"}
 
@@ -39,6 +40,8 @@ def parse_args():
     ap.add_argument("--out", default=None, help="condition dir (default out/<condition>)")
     ap.add_argument("--metrics", default=os.path.join(REPO_ROOT, "out", "metrics.csv"))
     ap.add_argument("--no-checks", action="store_true", help="report instead of fail on exposure/mask checks")
+    ap.add_argument("--lens", default="all", help="lens scenario name, or 'all' for every scenario in lens.scenarios")
+    ap.add_argument("--f-sweep", action="store_true", help="also analyse the 'good' lens at every f-number in lens.f_sweep")
     return ap.parse_args()
 
 
@@ -65,9 +68,7 @@ def main():
         manifest = json.load(fh)
     with open(os.path.join(renders, "id_map.json")) as fh:
         id_map = json.load(fh)
-    with open(os.path.join(REPO_ROOT, "assets", "coupon", "defects.json")) as fh:
-        records = json.load(fh)
-    layout = {d.prim: d for d in build_layout(cfg)}
+    layout = {d.prim: d for d in load_defects(cfg)}
     cam = build_camera(cfg["camera"])
     convert_npy_renders_to_exr(renders)
     n_frames = int(manifest["frames"])
@@ -98,7 +99,7 @@ def main():
         all_defects_dil |= m
 
     # mask check: every defect that should cover >= 1 px appears in the id map
-    centers = {prim: project_mm(cam, np.array([[d.center_mm[0], d.center_mm[1], 0.0]]))[0] for prim, d in layout.items()}
+    centers = {prim: project_mm(cam, np.array([d.center3_mm]))[0] for prim, d in layout.items()}
     missing_big = []
     for prim, d in layout.items():
         footprint_px = (d.size_mm if d.type.startswith("pore") else max(d.width_mm, 0) ) / cam.mm_per_px
@@ -146,45 +147,76 @@ def main():
     rows = []
     rng_base = int(cfg["seed"])
     plate_mask = zone_masks["cast"] | zone_masks["machined"] | defect_class
-    for f in range(n_frames):
-        Y = luminance(load_hdr(renders, f)) if f else Y0
-        rng = np.random.default_rng(rng_base * 1000 + f)
-        sim = simulate(Y, gain, sensor, rng)
-        write_png(os.path.join(out_dir, f"sim_{f}.png"), to_uint8(sim))
-        write_png(os.path.join(out_dir, f"preview_{f}.png"), tonemap_preview(load_hdr(renders, f), float(sensor["target_bg_level"]), bg_mach))
-        # exposure check (frame 0)
-        if f == 0:
-            bg_mean = float(sim[bg_mach].mean())
-            sat = float((sim[plate_mask] >= 1.0).mean())
-            lo, hi = (float(v) for v in chk["exposure_range"])
-            ok = lo <= bg_mean <= hi and sat < float(chk["max_saturated_frac"])
-            checks["exposure"] = {"pass": ok, "machined_bg_mean": bg_mean, "saturated_frac": sat, "gain": gain}
-            if not ok:
-                fail("exposure", f"machined bg mean {bg_mean:.3f} (want {lo}-{hi}), saturated fraction {sat:.5f}")
-        for prim, d in layout.items():
-            others = all_defects_dil & ~dilated[prim]
-            try:
-                r = measure_defect(sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim])
-            except ValueError as exc:
-                r = {"area_px": int(defect_masks[prim].sum()), "n_bg_px": 0, "mean_in": np.nan, "mean_bg": np.nan, "std_bg": np.nan,
-                     "cnr": np.nan, "cnr_peak": np.nan, "weber": np.nan, "detectable": False, "marginal": False, "mask_empty": True, "error": str(exc)}
-            r.update({
-                "condition": cond, "control": is_control, "frame": f, "prim": prim, "zone": d.zone, "type": d.type,
-                "size_mm": d.size_mm, "depth_mm": d.depth_mm, "length_mm": d.length_mm, "width_mm": d.width_mm,
-                "row": d.row, "col": d.col, "center_u_px": float(centers[prim][0]), "center_v_px": float(centers[prim][1]),
-                "mm_per_px": cam.mm_per_px, "view": cam.view, "working_distance_mm": cam.distance_mm,
-                "lighting_mode": manifest["lighting_mode"], "panel_intensity": manifest["solved_intensity"].get("panel"),
-                "dome_intensity": manifest["solved_intensity"].get("dome"), "directional_intensity": manifest["solved_intensity"].get("directional"),
-                "spp": manifest["spp"], "gain": gain, "seed": cfg["seed"],
-            })
-            rows.append(r)
+    lens_cfg = cfg.get("lens", {"scenarios": {"none": {"f_number": 8, "blur_um": None}}, "default_scenario": "none"})
+    scenarios = list(lens_cfg["scenarios"]) if args.lens == "all" else [args.lens]
+    default_lens = lens_cfg.get("default_scenario", "none")
+    if default_lens not in scenarios:
+        scenarios.insert(0, default_lens)
+    # f-number sweep: the "good" lens blur at every f-number in lens.f_sweep (analysis only)
+    f_sweep = [float(v) for v in lens_cfg.get("f_sweep", [])] if args.f_sweep else []
+    sweep_items = [(f"good_f{v:g}", "good", v) for v in f_sweep if "good" in lens_cfg["scenarios"]]
+    cam_info = cfg["camera"].get("model_info", {})
+    hdr_cache = {}
+
+    def hdr(f):
+        if f not in hdr_cache:
+            hdr_cache[f] = load_hdr(renders, f)
+        return hdr_cache[f]
+
+    for lens_name, base_scn, f_over in [(n, n, None) for n in scenarios] + sweep_items:
+        psf = scenario_psf(cfg, base_scn, f_number_override=f_over)
+        for f in range(n_frames):
+            img_lin = hdr(f)
+            if psf["psf_sigma_px"] > 0:
+                img_lin = apply_psf(img_lin, psf["psf_sigma_px"])
+            Y = luminance(img_lin)
+            rng = np.random.default_rng(rng_base * 1000 + f)  # same noise realisation for every lens
+            sim = simulate(Y, gain, sensor, rng)
+            suffix = "" if lens_name == default_lens else f"_{lens_name}"
+            write_png(os.path.join(out_dir, f"sim_{f}{suffix}.png"), to_uint8(sim))
+            if lens_name == default_lens:
+                write_png(os.path.join(out_dir, f"preview_{f}.png"), tonemap_preview(hdr(f), float(sensor["target_bg_level"]), bg_mach))
+            # exposure check (default lens, frame 0)
+            if f == 0 and lens_name == default_lens:
+                bg_mean = float(sim[bg_mach].mean())
+                sat = float((sim[plate_mask] >= 1.0).mean())
+                lo, hi = (float(v) for v in chk["exposure_range"])
+                ok = lo <= bg_mean <= hi and sat < float(chk["max_saturated_frac"])
+                checks["exposure"] = {"pass": ok, "machined_bg_mean": bg_mean, "saturated_frac": sat, "gain": gain}
+                if not ok:
+                    fail("exposure", f"machined bg mean {bg_mean:.3f} (want {lo}-{hi}), saturated fraction {sat:.5f}")
+            for prim, d in layout.items():
+                others = all_defects_dil & ~dilated[prim]
+                try:
+                    r = measure_defect(sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim])
+                except ValueError as exc:
+                    r = {"area_px": int(defect_masks[prim].sum()), "n_bg_px": 0, "mean_in": np.nan, "mean_bg": np.nan, "std_bg": np.nan,
+                         "cnr": np.nan, "cnr_peak": np.nan, "weber": np.nan, "detectable": False, "marginal": False, "mask_empty": True,
+                         "saturated_bg": False, "error": str(exc)}
+                r.update({
+                    "condition": cond, "control": is_control, "frame": f, "prim": prim, "zone": d.zone, "type": d.type,
+                    "size_mm": d.size_mm, "depth_mm": d.depth_mm, "length_mm": d.length_mm, "width_mm": d.width_mm,
+                    "row": d.row, "col": d.col, "center_u_px": float(centers[prim][0]), "center_v_px": float(centers[prim][1]),
+                    "mm_per_px": cam.mm_per_px, "view": cam.view, "working_distance_mm": cam.distance_mm,
+                    "focal_length_mm": cam.focal_length_mm, "sensor_width_mm": cam.sensor_width_mm,
+                    "res_x": cam.res_x, "res_y": cam.res_y,
+                    "lighting_mode": manifest["lighting_mode"], "panel_intensity": manifest["solved_intensity"].get("panel"),
+                    "dome_intensity": manifest["solved_intensity"].get("dome"), "directional_intensity": manifest["solved_intensity"].get("directional"),
+                    "spp": manifest["spp"], "gain": gain, "seed": cfg["seed"],
+                    "lens": lens_name, "f_number": psf["f_number"], "blur_um": psf["blur_um"], "psf_sigma_px": psf["psf_sigma_px"],
+                    "psf_sigma_object_mm": psf["psf_sigma_object_mm"], "depth_of_field_mm": psf["depth_of_field_mm"],
+                    "camera_model": cfg["sensor"].get("camera_model"), "sensor_name": cam_info.get("sensor"),
+                    "pixel_um": psf["pixel_um"], "shutter": cam_info.get("shutter"), "price_eur": cam_info.get("price_eur"),
+                    "full_well_e": sensor["full_well_e"], "read_noise_e": sensor["read_noise_e"], "bit_depth": sensor["bit_depth"],
+                })
+                rows.append(r)
     df = pd.DataFrame(rows)
 
     # positive-control check: under the raking light every machined-zone scratch and burr must
     # cross the threshold (mean CNR when it has a mask, peak CNR when it is sub-pixel). If not, the
     # geometry, masks or metric are wrong and no ambient result can be trusted.
     if is_control:
-        f0 = df[(df.frame == 0) & (df.zone == "machined") & (df.type.isin(["scratch", "burr"]))]
+        f0 = df[(df.frame == 0) & (df.lens == default_lens) & (df.zone == "machined") & (df.type.isin(["scratch", "burr"]))]
         thr_cnr = float(thr["cnr"])
         rows_pc = []
         for r in f0.itertuples():
@@ -199,7 +231,10 @@ def main():
 
     cols = ["condition", "frame", "prim", "zone", "type", "size_mm", "depth_mm", "length_mm", "width_mm", "row", "col",
             "area_px", "mean_in", "mean_bg", "std_bg", "cnr", "cnr_peak", "weber", "detectable", "marginal", "mask_empty", "saturated_bg",
-            "n_bg_px", "center_u_px", "center_v_px", "mm_per_px", "view", "working_distance_mm", "lighting_mode",
+            "n_bg_px", "center_u_px", "center_v_px", "lens", "f_number", "blur_um", "psf_sigma_px", "psf_sigma_object_mm",
+            "camera_model", "sensor_name", "pixel_um", "shutter", "price_eur", "res_x", "res_y", "sensor_width_mm", "focal_length_mm",
+            "depth_of_field_mm", "full_well_e", "read_noise_e", "bit_depth",
+            "mm_per_px", "view", "working_distance_mm", "lighting_mode",
             "panel_intensity", "dome_intensity", "directional_intensity", "spp", "gain", "seed", "control"]
     df = df[[c for c in cols if c in df.columns] + [c for c in df.columns if c not in cols]]
 
@@ -238,8 +273,8 @@ def main():
     df.to_csv(args.metrics, index=False)
     with open(os.path.join(out_dir, "analysis_checks.json"), "w") as fh:
         json.dump(checks, fh, indent=1, default=float)
-    this = df[df["condition"] == cond]
-    print(f"[compute_cnr] {cond}: {len(this)} rows ({n_frames} frames x {len(layout)} defects), gain {gain:.4f}, "
+    this = df[(df["condition"] == cond) & (df["lens"] == default_lens)]
+    print(f"[compute_cnr] {cond}: {len(this)} rows x {len(scenarios) + len(sweep_items)} lens scenarios ({n_frames} frames x {len(layout)} defects), gain {gain:.4f}, "
           f"bg {checks['exposure']['machined_bg_mean']:.3f}, render-noise ratio {noise['ratio']:.2f}, "
           f"detectable (frame 0): {int(this[this.frame == 0].detectable.sum())}/{len(layout)}")
 

@@ -21,11 +21,10 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
 from ads.config import load_config  # noqa: E402
-from ads.layout import build_layout, ZONE_SHORT  # noqa: E402
+from ads.layout import load_defects, load_part_info, asset_paths  # noqa: E402
 from ads.camera import build_camera  # noqa: E402
 from omniverse import common  # noqa: E402
 
-ZONE_PLATE = {"cast": "Coupon_Cast", "machined": "Coupon_Machined"}
 
 
 def parse_args():
@@ -44,7 +43,9 @@ def main():
     out_dir = common.ensure_dir(os.path.abspath(args.out or os.path.join("out", cond)))
     W, H = (int(v) for v in cfg["camera"]["resolution"])
     cam = build_camera(cfg["camera"])
-    layout = build_layout(cfg)
+    layout = load_defects(cfg)
+    ZONE_PLATE = asset_paths(cfg)["zone_prims"]
+    part = load_part_info(cfg)
     t_start = time.time()
 
     app = common.start_app(cfg, W, H)
@@ -72,7 +73,7 @@ def main():
     stage.SetDefaultPrim(world.GetPrim())
 
     # ---- coupon reference (relative path so scene.usd works from the host too)
-    coupon_abs = os.path.abspath(os.path.join(REPO_ROOT, "assets", "coupon", "coupon.usd"))
+    coupon_abs = asset_paths(cfg)["usd"]
     coupon_rel = os.path.relpath(coupon_abs, out_dir)
     coupon_prim = stage.DefinePrim("/World/Coupon", "Xform")
     coupon_prim.GetReferences().AddReference(coupon_rel, "/Coupon")
@@ -86,9 +87,9 @@ def main():
     for p in plate_prims:
         rng.UnionWith(bbox_cache.ComputeWorldBound(p).ComputeAlignedRange())
     width_m = rng.GetMax()[0] - rng.GetMin()[0]
-    plate_w_m = float(cfg["coupon"]["plate_mm"][0]) / 1000.0
+    plate_w_m = float(part["extent_mm"][0]) / 1000.0
     if abs(width_m - plate_w_m) > 1e-4:
-        raise RuntimeError(f"coupon width in stage is {width_m} m, want {plate_w_m} m")
+        raise RuntimeError(f"asset width in stage is {width_m} m, want {plate_w_m} m")
     print(f"[build_scene] coupon bbox {rng.GetMin()} .. {rng.GetMax()} (width {width_m:.6f} m)")
     defect_prims = {d.prim: stage.GetPrimAtPath(f"/World/Coupon/{d.prim}") for d in layout}
     missing = [k for k, p in defect_prims.items() if not p.IsValid()]
@@ -303,14 +304,21 @@ def main():
     if abs(mean1 - target) / target > 0.03:
         raise RuntimeError(f"intensity solve did not converge: {mean1} vs target {target}")
 
-    # ---- scale check: plate width in pixels
-    zone_all = common.mask_from_ids(frame["sem"], sum((classes.get(k, []) for k in ("zone_cast", "zone_machined", "defect")), []))
+    # ---- scale check: width in pixels of geometry lying on the reference plane (z = 0). For the
+    # coupon that is the whole plate; for a real part only the machined zone sits on the plane (the
+    # rest is farther from the camera and foreshortened), so its extent is compared instead.
+    if part.get("kind") == "part":
+        zone_all = common.mask_from_ids(frame["sem"], classes.get("zone_machined", []))
+        want_px = float(part["machined_extent_mm"][0]) / cam.mm_per_px
+        tol = float(cfg["checks"].get("part_scale_tol_frac", 0.02))
+    else:
+        zone_all = common.mask_from_ids(frame["sem"], sum((classes.get(k, []) for k in ("zone_cast", "zone_machined", "defect")), []))
+        want_px = float(part["extent_mm"][0]) / cam.mm_per_px
+        tol = float(cfg["checks"]["scale_tol_frac"])
     cols = np.where(zone_all.any(axis=0))[0]
     rows = np.where(zone_all.any(axis=1))[0]
     width_px = int(cols.max() - cols.min() + 1)
     height_px = int(rows.max() - rows.min() + 1)
-    want_px = float(cfg["coupon"]["plate_mm"][0]) / cam.mm_per_px
-    tol = float(cfg["checks"]["scale_tol_frac"])
     if abs(width_px - want_px) / want_px > tol:
         raise RuntimeError(f"scale check failed: plate spans {width_px} px, want {want_px:.1f} +- {tol*100:.0f}%")
     print(f"[build_scene] scale check passed: plate {width_px} x {height_px} px (want {want_px:.0f} px wide)")

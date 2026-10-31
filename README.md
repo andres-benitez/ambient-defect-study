@@ -131,6 +131,44 @@ dark-field positive control). `lighting.mode: hdri` needs `lighting.hdri.path` s
   centroid within 2 px of the projected `center_mm` (this validates the projection used for the
   empty-mask fallback).
 
+## Camera comparison, optics, exposure and rolling shutter
+
+`config/experiment.yaml` carries a `cameras:` catalogue (Basler ace 2 Basic GigE candidates with their
+EMVA 1288 figures and indicative prices). A condition that sets `camera.model` derives resolution,
+sensor width, pixel scale and focal length from the catalogue and the `framing:` block (one shot of a
+`fov_mm` wide face at `working_distance_mm`), and takes full well / read noise / QE from the sensor.
+Run them with `python run_all.py --condition cam_a2A2448` (and the other `cam_*` conditions), then
+`python analysis/camera_report.py` for `out/figures/camera_*.png`, `out/camera_summary.csv` and
+`out/camera_table.json`.
+
+- **Lens (`lens:`).** Applied in analysis, no re-render: a Gaussian point-spread function with
+  sigma = sqrt((0.44 lambda N)^2 + blur_um^2) where the first term is diffraction at f-number N and
+  `blur_um` is the lens's RMS spot (0 = diffraction-limited, 2 um = a lens matched to small pixels,
+  5 um = a generic 5 MP-class lens). `compute_cnr.py --lens all` writes one row set per scenario
+  (`lens` column); `--f-sweep` adds the "good" lens at every f-number in `lens.f_sweep`. Depth of
+  field (1 px circle of confusion) is reported per f-number.
+- **Exposure time (`photometry:`).** From hall illuminance, the ceiling's solid angle, the machined
+  face's reflectance, the f-number, pixel area and QE: the time needed to put the machined face at
+  the target level. Assumptions, not measurements.
+- **Rolling shutter (`rolling_shutter:`).** For rolling-shutter candidates, horizontal banding under
+  flickering light is simulated by scaling rows with the flicker averaged over each row's exposure
+  window; `camera_report.py` writes the image panel, the CNR impact and the amplitude-vs-exposure curve.
+  Static parts have no geometric rolling-shutter distortion.
+
+## Real part (engine block scan)
+
+`blender/make_part.py` puts the same 48 defects on a real part: `part.source` (a glTF/STL/OBJ mesh;
+the default is the CC BY "Engine Cylinder Block" scan by 3dscantech from Sketchfab via Objaverse,
+stored under `assets/crankcase/source/`, not committed). It stitches the mesh, finds the largest
+planar region that can face the camera, rotates the part so that region is horizontal at z = 0 and
+flattens it (the machined zone), keeps everything else as scanned cast geometry, chooses defect
+sites by ray casting (locally flat, camera-facing, clear of edges and holes), cuts pores and
+scratches with exact booleans and adds burrs as ridges. Output: `assets/crankcase/crankcase.usd`,
+`defects.json` (3-D centres), `part.json` (extent, zone prims, source and licence). Conditions
+`part_5mp` and `part_18mp` render the whole part in one shot (`framing.fov_mm: 620`) with the
+client's 5 MP class and the best in-budget candidate. `asset:` in the config (or a condition) selects
+coupon or part.
+
 ## Layout
 
 ```
@@ -139,6 +177,7 @@ config/experiment.yaml       every parameter
 ads/                         shared: config loader, coupon layout, camera model
 blender/make_coupon.py       Stage 1 (Blender Python)
 blender/checks.py            geometry checks
+blender/make_part.py         Stage 1 for a real part (scan or CAD mesh)
 omniverse/isaacsim_docker.sh container launcher
 omniverse/common.py          render settings, annotators, helpers (Isaac Sim Python)
 omniverse/build_scene.py     Stage 2
@@ -148,6 +187,10 @@ analysis/sensor_model.py     gain, shot/read noise, quantisation
 analysis/metrics.py          per-defect CNR measurement
 analysis/render_noise.py     residual render-noise estimate
 analysis/io_utils.py         EXR / PNG helpers
+analysis/optics.py           lens PSF (diffraction + spot), depth of field
+analysis/photometry.py       exposure-time estimate
+analysis/rolling_shutter.py  flicker banding model
+analysis/camera_report.py    camera comparison figures and tables
 analysis/compute_cnr.py      Stage 4a
 analysis/plot_results.py     Stage 4b
 tests/test_cnr.py            unit tests

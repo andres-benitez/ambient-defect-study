@@ -5,3 +5,5 @@ assets/coupon/coupon.blend1
 __pycache__/
 *.pyc
 .pytest_cache/
+assets/crankcase/source/
+assets/crankcase/*.blend

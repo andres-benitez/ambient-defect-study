@@ -20,10 +20,9 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
 from ads.config import load_config  # noqa: E402
-from ads.layout import build_layout  # noqa: E402
+from ads.layout import load_defects, load_part_info, asset_paths  # noqa: E402
 from omniverse import common  # noqa: E402
 
-ZONE_PLATE = {"cast": "Coupon_Cast", "machined": "Coupon_Machined"}
 
 
 def parse_args():
@@ -51,7 +50,9 @@ def main():
     with open(os.path.join(out_dir, "scene_manifest.json")) as fh:
         scene_manifest = json.load(fh)
     W, H = (int(v) for v in cfg["camera"]["resolution"])
-    layout = build_layout(cfg)
+    layout = load_defects(cfg)
+    ZONE_PLATE = asset_paths(cfg)["zone_prims"]
+    part = load_part_info(cfg)
     n_frames = int(args.frames or cfg["render"]["frames_per_condition"])
     t_start = time.time()
 

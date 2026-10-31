@@ -52,6 +52,13 @@ def measure_defect(img: np.ndarray, mask: np.ndarray, zone_mask: np.ndarray, exc
         if fallback_center_uv is None:
             raise ValueError("empty mask and no fallback centre")
         region = fallback_window(img.shape, fallback_center_uv, int(cfg_analysis.get("fallback_window_px", 3)))
+    # work on a crop around the region: the annulus never reaches further than r_out + dil pixels
+    ys, xs = np.where(region)
+    margin = r_out + dil + 2
+    y0, y1 = max(int(ys.min()) - margin, 0), min(int(ys.max()) + margin + 1, img.shape[0])
+    x0, x1 = max(int(xs.min()) - margin, 0), min(int(xs.max()) + margin + 1, img.shape[1])
+    sl = (slice(y0, y1), slice(x0, x1))
+    img, region, zone_mask, exclude_mask = img[sl], region[sl], zone_mask[sl], exclude_mask[sl]
     core = dilate(region, dil)
     bg = annulus(core, r_in, r_out) & zone_mask.astype(bool) & ~exclude_mask.astype(bool)
     n_bg = int(bg.sum())

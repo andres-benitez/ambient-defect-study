@@ -2,6 +2,35 @@
 # Units: mm for geometry and pixel scale, metres for the lighting rig, Kelvin for colour temperature.
 seed: 1234
 
+asset:                           # which test object the scene uses
+  kind: coupon                   # coupon (flat plate from blender/make_coupon.py) | part (blender/make_part.py)
+  dir: assets/coupon
+  usd: coupon.usd
+  defects: defects.json          # one record per defect (prim, zone, type, size, 3-D centre in mm)
+  part_json: part.json           # extent, zone prim names, source and licence
+  zone_prims: {cast: Coupon_Cast, machined: Coupon_Machined}
+
+part:                            # real-part proxy built by blender/make_part.py (asset.kind = part)
+  source: assets/crankcase/source/engine_cylinder_block.glb
+  source_name: "Engine Cylinder Block"
+  source_author: 3dscantech
+  source_url: https://sketchfab.com/3d-models/0ce38e5e3aa94a65bb79c60e0535f225
+  source_license: CC BY 4.0
+  source_units_per_mm: 1.0       # the scan is in millimetres
+  expected_extent_mm: [100, 2000] # sanity check on the imported size
+  merge_mm: 0.02                 # vertex merge distance to stitch the scan's mesh chunks
+  long_axis: x                   # rotate so the longest horizontal extent runs along x (landscape sensor)
+  machined:                      # the largest planar region facing the camera becomes the machined zone
+    normal_tol_deg: 10
+    plane_band_mm: 1.5
+    flatten: true                # project its vertices onto the fitted plane (the scan cannot resolve a machined finish)
+  sites:                         # where the 48 defects go
+    grid_mm: 2.0
+    clearance_mm: 4.0            # distance to the zone boundary / holes (scratches and burrs are 5 mm long)
+    cast_max_tilt_deg: 25        # cast sites must face the camera within this angle
+    cast_height_tol_mm: 1.0      # local smoothness of a cast site over the clearance radius
+    min_spacing_mm: 8              # the machined zone on the block scan is the ~8 mm wide oil-pan sealing flange
+
 coupon:
   plate_mm: [120, 80, 10]        # full coupon (two zones side by side along x)
   pitch_mm: 10                   # defect grid pitch
@@ -44,6 +73,52 @@ camera:
   f_number: 8
   view: nadir                    # nadir | oblique30
   oblique_tilt_deg: 30
+  model: null                    # a key of `cameras:` below; when set, resolution, sensor width, pixel
+                                 # scale, focal length and the sensor noise block are derived from it
+
+# Candidate cameras (Basler ace 2 Basic, GigE, mono). EMVA 1288 typical values from Basler's
+# "EMVA Data Overview" No. 16 and product pages; prices are indicative list prices seen 2026-10-31
+# (EUR where Basler lists them, otherwise converted from USD) and exclude the lens.
+cameras:
+  a2A1920-51gmBAS: {sensor: Sony IMX392, mp: 2.3, resolution: [1920, 1200], pixel_um: 3.45, format: '1/2.3"',
+                    shutter: global, full_well_e: 10500, read_noise_e: 3.0, qe: 0.62, adc_bits: 12, price_eur: 400}
+  a2A2448-23gmBAS: {sensor: Sony IMX547, mp: 5.0, resolution: [2448, 2048], pixel_um: 2.74, format: '1/1.8"',
+                    shutter: global, full_well_e: 9900, read_noise_e: 2.4, qe: 0.66, adc_bits: 12, price_eur: 700}
+  a2A3840-13gmBAS: {sensor: Sony IMX334, mp: 8.3, resolution: [3840, 2160], pixel_um: 2.0, format: '1/1.8"',
+                    shutter: rolling, readout_ms: 22, full_well_e: 7200, read_noise_e: 2.0, qe: 0.73, adc_bits: 12, price_eur: 420}
+  a2A4096-9gmBAS:  {sensor: Sony IMX545, mp: 12.3, resolution: [4096, 3000], pixel_um: 2.74, format: '1/1.1"',
+                    shutter: global, full_well_e: 9900, read_noise_e: 3.0, qe: 0.67, adc_bits: 12, price_eur: 1150}
+  a2A4508-6gmBAS:  {sensor: Gpixel GMAX2518, mp: 18.5, resolution: [4508, 4096], pixel_um: 2.5, format: '1"',
+                    shutter: global, full_well_e: 6700, read_noise_e: 3.0, qe: 0.56, adc_bits: 12, price_eur: 1100}
+  a2A5320-7gmBAS:  {sensor: Sony IMX542, mp: 16.1, resolution: [5320, 3032], pixel_um: 2.74, format: '1.1"',
+                    shutter: global, full_well_e: 9700, read_noise_e: 2.0, qe: 0.66, adc_bits: 12, price_eur: 1500}
+
+framing:                         # used when camera.model is set
+  mode: fov                      # fov: the whole face in one shot -> mm_per_px = fov_mm / resolution_x
+  fov_mm: 300                    # crankcase face width
+  working_distance_mm: 800       # focal length follows: f = distance x sensor_width / fov
+
+lens:                            # optics applied in analysis (no re-render): diffraction + lens blur
+  wavelength_nm: 550
+  transmission: 0.90
+  default_scenario: none         # rows without optics keep the earlier results comparable
+  scenarios:
+    none:   {f_number: 8, blur_um: null}   # perfect pixel sampling, no optics (the pipeline so far)
+    ideal:  {f_number: 8, blur_um: 0.0}    # diffraction-limited lens at f/8
+    good:   {f_number: 8, blur_um: 2.0}    # lens matched to small pixels (RMS spot ~2 um), ~EUR 400-800
+    budget: {f_number: 8, blur_um: 5.0}    # generic 5 MP-class lens (RMS spot ~5 um), ~EUR 100-200
+  f_sweep: [2.8, 4, 5.6, 8, 11, 16]        # analysed for one camera with the "good" lens blur
+
+photometry:                      # exposure-time estimate under ambient light (assumptions, see README)
+  illuminance_lux: [300, 1000]   # on the part: dim hall .. bright hall
+  ceiling_solid_angle_sr: 0.78   # projected solid angle of the lit ceiling seen from the part (3x3 m at 3 m)
+  machined_reflectance: 0.85
+  lumens_per_watt: 250           # luminous efficacy of the light's spectrum (white LED / daylight-ish)
+
+rolling_shutter:                 # banding model for rolling-shutter cameras under flickering light
+  flicker_hz: 100                # mains-driven lighting in Europe (2 x 50 Hz); daylight has none
+  modulation: 0.30               # light modulation depth (0 for daylight, 0.1-0.5 for cheap LED drivers)
+  exposure_ms: 10                # exposure used for the banding illustration
 
 render:
   mode: pathtracing
@@ -74,7 +149,9 @@ analysis:
 checks:
   plate_tol_mm: 0.01
   center_tol_mm: 0.05
+  part_center_tol_mm: 0.5        # lateral tolerance for defects on the real part (tilted scan surfaces)
   scale_tol_frac: 0.01
+  part_scale_tol_frac: 0.02      # real part: the machined zone's pixel width vs its extent (bosses may clip its edges)
   exposure_range: [0.35, 0.45]
   max_saturated_frac: 0.001
   render_noise_frac: 0.20
@@ -94,4 +171,23 @@ conditions:
   control_darkfield:
     control: true
     lighting: {mode: directional}
+    render: {frames_per_condition: 1}
+  # camera comparison: one shot of the 300 mm face with each candidate (frames: 1, they are identical)
+  cam_a2A1920: {camera: {model: a2A1920-51gmBAS}, render: {frames_per_condition: 1}}
+  cam_a2A2448: {camera: {model: a2A2448-23gmBAS}, render: {frames_per_condition: 1}}
+  cam_a2A3840: {camera: {model: a2A3840-13gmBAS}, render: {frames_per_condition: 1}}
+  cam_a2A4096: {camera: {model: a2A4096-9gmBAS}, render: {frames_per_condition: 1}}
+  cam_a2A4508: {camera: {model: a2A4508-6gmBAS}, render: {frames_per_condition: 1}}
+  cam_a2A5320: {camera: {model: a2A5320-7gmBAS}, render: {frames_per_condition: 1}}
+  # real part (engine cylinder block scan) with the whole part in view: the client's 5 MP class and the
+  # best in-budget candidate
+  part_5mp:
+    asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}
+    camera: {model: a2A2448-23gmBAS}
+    framing: {fov_mm: 620}
+    render: {frames_per_condition: 1}
+  part_18mp:
+    asset: {kind: part, dir: assets/crankcase, usd: crankcase.usd, zone_prims: {cast: Part_Cast, machined: Part_Machined}}
+    camera: {model: a2A4508-6gmBAS}
+    framing: {fov_mm: 620}
     render: {frames_per_condition: 1}

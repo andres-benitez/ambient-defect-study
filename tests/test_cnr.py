@@ -117,3 +117,33 @@ def test_saturated_background_gives_nan_cnr():
     img[disc] = 0.9
     r = measure_defect(img, disc, np.ones((64, 64), bool), np.zeros((64, 64), bool), ANALYSIS, THRESH)
     assert r["saturated_bg"] and np.isnan(r["cnr"]) and not r["detectable"]
+
+
+def test_optics_psf_and_dof():
+    from analysis.optics import psf_sigma_um, airy_diameter_um, depth_of_field_mm, apply_psf
+    assert abs(airy_diameter_um(8, 550) - 10.74) < 0.05
+    assert abs(psf_sigma_um(8, 550, 0.0) - 1.936) < 0.01
+    assert abs(psf_sigma_um(8, 550, 2.0) - (1.936**2 + 4) ** 0.5) < 1e-6
+    # 2.74 um pixels at 0.1225 mm/px, f/8: m = 0.02237, c = 2.74 um -> DoF = 2*8*0.00274/m^2 ~ 87.6 mm
+    assert abs(depth_of_field_mm(8, 2.74, 0.1225) - 87.6) < 1.0
+    img = np.zeros((32, 32)); img[16, 16] = 1.0
+    b = apply_psf(img, 1.5)
+    assert abs(b.sum() - 1.0) < 1e-6 and b[16, 16] < 0.1
+
+
+def test_photometry_exposure_reasonable():
+    from analysis.photometry import exposure_ms
+    cfg = {"photometry": {"ceiling_solid_angle_sr": 0.78, "machined_reflectance": 0.85, "lumens_per_watt": 250},
+           "camera": {"f_number": 8, "pixel_um": 2.74, "mm_per_px": 0.1225, "resolution": [2448, 2048], "sensor_width_mm": 6.7},
+           "sensor": {"qe": 0.66, "target_bg_level": 0.4, "full_well_e": 9900}, "lens": {"transmission": 0.9, "wavelength_nm": 550}}
+    r = exposure_ms(500, cfg)
+    assert 5 < r["exposure_ms"] < 40, r  # a few tens of ms at 500 lux and f/8
+    assert abs(exposure_ms(1000, cfg)["exposure_ms"] * 2 - r["exposure_ms"]) < 1e-6
+
+
+def test_rolling_shutter_banding():
+    from analysis.rolling_shutter import row_gains, banding_amplitude
+    g = row_gains(1000, 22.0, 10.0, 100.0, 0.3)
+    assert g.shape == (1000,) and abs(g.mean() - 1.0) < 0.02
+    assert banding_amplitude(10.0, 100.0, 0.3) < 1e-9  # exposure = one flicker period: no bands
+    assert abs(banding_amplitude(5.0, 100.0, 0.3) - 0.3 * 2 / np.pi) < 1e-6  # half a period: 64% of m

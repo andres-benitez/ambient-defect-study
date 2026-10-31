@@ -1,0 +1,1298 @@
+[
+ {
+  "prim": "D_cast_pore_shallow_0050",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.05,
+  "depth_mm": 0.025,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   38.350067,
+   5.761551,
+   -65.136711
+  ],
+  "row": 0,
+  "col": 0,
+  "bbox_center_mm": [
+   38.3501,
+   5.7616,
+   -65.1472
+  ],
+  "normal": [
+   -0.1058,
+   -0.0448,
+   0.9934
+  ],
+  "n_faces": 2050
+ },
+ {
+  "prim": "D_cast_pore_shallow_0100",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.1,
+  "depth_mm": 0.05,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -243.649933,
+   113.761551,
+   -73.865776
+  ],
+  "row": 0,
+  "col": 1,
+  "bbox_center_mm": [
+   -243.6498,
+   113.7617,
+   -73.8877
+  ],
+  "normal": [
+   -0.1182,
+   -0.0827,
+   0.9895
+  ],
+  "n_faces": 2050
+ },
+ {
+  "prim": "D_cast_pore_shallow_0200",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.2,
+  "depth_mm": 0.1,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   238.350067,
+   145.761551,
+   22.802658
+  ],
+  "row": 0,
+  "col": 2,
+  "bbox_center_mm": [
+   238.3501,
+   145.7617,
+   22.7565
+  ],
+  "normal": [
+   -0.0321,
+   -0.0724,
+   0.9969
+  ],
+  "n_faces": 2063
+ },
+ {
+  "prim": "D_cast_pore_shallow_0500",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.5,
+  "depth_mm": 0.25,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   212.350067,
+   -138.238449,
+   1.984291
+  ],
+  "row": 0,
+  "col": 3,
+  "bbox_center_mm": [
+   212.3501,
+   -138.2383,
+   1.867
+  ],
+  "normal": [
+   -0.0024,
+   -0.0625,
+   0.998
+  ],
+  "n_faces": 2059
+ },
+ {
+  "prim": "D_cast_pore_shallow_1000",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 1.0,
+  "depth_mm": 0.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -99.649933,
+   -128.238449,
+   2.470261
+  ],
+  "row": 0,
+  "col": 4,
+  "bbox_center_mm": [
+   -99.6486,
+   -128.2378,
+   2.2516
+  ],
+  "normal": [
+   -0.1001,
+   -0.0503,
+   0.9937
+  ],
+  "n_faces": 2056
+ },
+ {
+  "prim": "D_cast_pore_shallow_2000",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 2.0,
+  "depth_mm": 1.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -85.649933,
+   123.761551,
+   -217.052216
+  ],
+  "row": 0,
+  "col": 5,
+  "bbox_center_mm": [
+   -85.6137,
+   123.7616,
+   -217.361
+  ],
+  "normal": [
+   -0.384,
+   -0.0125,
+   0.9233
+  ],
+  "n_faces": 2053
+ },
+ {
+  "prim": "D_cast_pore_deep_0050",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.05,
+  "depth_mm": 0.07500000000000001,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   184.350067,
+   9.761551,
+   -83.042885
+  ],
+  "row": 1,
+  "col": 0,
+  "bbox_center_mm": [
+   184.3502,
+   9.7618,
+   -83.0794
+  ],
+  "normal": [
+   -0.0576,
+   -0.0676,
+   0.996
+  ],
+  "n_faces": 2066
+ },
+ {
+  "prim": "D_cast_pore_deep_0100",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.1,
+  "depth_mm": 0.15000000000000002,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   68.350067,
+   -132.238449,
+   -32.807343
+  ],
+  "row": 1,
+  "col": 1,
+  "bbox_center_mm": [
+   68.3501,
+   -132.2384,
+   -32.8811
+  ],
+  "normal": [
+   0.005,
+   0.0039,
+   1.0
+  ],
+  "n_faces": 2052
+ },
+ {
+  "prim": "D_cast_pore_deep_0200",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.2,
+  "depth_mm": 0.30000000000000004,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   104.350067,
+   123.761551,
+   18.599171
+  ],
+  "row": 1,
+  "col": 2,
+  "bbox_center_mm": [
+   104.3501,
+   123.7626,
+   18.4532
+  ],
+  "normal": [
+   -0.0184,
+   -0.068,
+   0.9975
+  ],
+  "n_faces": 2069
+ },
+ {
+  "prim": "D_cast_pore_deep_0500",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.5,
+  "depth_mm": 0.75,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -125.649933,
+   -0.238449,
+   5.709946
+  ],
+  "row": 1,
+  "col": 3,
+  "bbox_center_mm": [
+   -125.6499,
+   -0.2349,
+   5.3489
+  ],
+  "normal": [
+   -0.0142,
+   -0.0785,
+   0.9968
+  ],
+  "n_faces": 2055
+ },
+ {
+  "prim": "D_cast_pore_deep_1000",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 1.0,
+  "depth_mm": 1.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -19.649933,
+   -72.238449,
+   -43.79744
+  ],
+  "row": 1,
+  "col": 4,
+  "bbox_center_mm": [
+   -19.6863,
+   -72.231,
+   -44.4815
+  ],
+  "normal": [
+   0.1848,
+   -0.0827,
+   0.9793
+  ],
+  "n_faces": 2056
+ },
+ {
+  "prim": "D_cast_pore_deep_2000",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 2.0,
+  "depth_mm": 3.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   4.350067,
+   103.761551,
+   15.402374
+  ],
+  "row": 1,
+  "col": 5,
+  "bbox_center_mm": [
+   4.3502,
+   103.7723,
+   13.9422
+  ],
+  "normal": [
+   -0.0122,
+   -0.0692,
+   0.9975
+  ],
+  "n_faces": 2056
+ },
+ {
+  "prim": "D_cast_scratch_0010",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.01,
+  "depth_mm": 0.01,
+  "length_mm": 5.0,
+  "width_mm": 0.01,
+  "center_mm": [
+   -157.649933,
+   73.761551,
+   -3.289124
+  ],
+  "row": 2,
+  "col": 0,
+  "bbox_center_mm": [
+   -157.6487,
+   73.7616,
+   -3.2759
+  ],
+  "normal": [
+   0.0635,
+   0.0019,
+   0.998
+  ],
+  "n_faces": 28
+ },
+ {
+  "prim": "D_cast_scratch_0020",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.02,
+  "depth_mm": 0.02,
+  "length_mm": 5.0,
+  "width_mm": 0.02,
+  "center_mm": [
+   224.350067,
+   -60.238449,
+   7.790985
+  ],
+  "row": 2,
+  "col": 1,
+  "bbox_center_mm": [
+   224.3503,
+   -60.2393,
+   7.792
+  ],
+  "normal": [
+   -0.0186,
+   -0.0704,
+   0.9973
+  ],
+  "n_faces": 25
+ },
+ {
+  "prim": "D_cast_scratch_0050",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   236.350067,
+   67.761551,
+   17.160873
+  ],
+  "row": 2,
+  "col": 2,
+  "bbox_center_mm": [
+   236.3506,
+   67.7657,
+   17.124
+  ],
+  "normal": [
+   -0.0437,
+   -0.0768,
+   0.9961
+  ],
+  "n_faces": 24
+ },
+ {
+  "prim": "D_cast_scratch_0100",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   146.350067,
+   -106.238449,
+   -26.21328
+  ],
+  "row": 2,
+  "col": 3,
+  "bbox_center_mm": [
+   146.3839,
+   -106.2381,
+   -26.295
+  ],
+  "normal": [
+   -0.0335,
+   -0.0516,
+   0.9981
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_scratch_0200",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   -75.649933,
+   51.761551,
+   -56.538277
+  ],
+  "row": 2,
+  "col": 4,
+  "bbox_center_mm": [
+   -75.6584,
+   51.7569,
+   -56.6096
+  ],
+  "normal": [
+   0.0788,
+   -0.0662,
+   0.9947
+  ],
+  "n_faces": 30
+ },
+ {
+  "prim": "D_cast_scratch_0500",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   122.350067,
+   -26.238449,
+   -88.809273
+  ],
+  "row": 2,
+  "col": 5,
+  "bbox_center_mm": [
+   122.3813,
+   -26.222,
+   -89.0928
+  ],
+  "normal": [
+   -0.1187,
+   -0.1644,
+   0.9792
+  ],
+  "n_faces": 25
+ },
+ {
+  "prim": "D_cast_burr_0050",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   -29.649933,
+   -4.238449,
+   -42.383377
+  ],
+  "row": 3,
+  "col": 0,
+  "bbox_center_mm": [
+   -29.6559,
+   -4.2384,
+   -42.3645
+  ],
+  "normal": [
+   -0.2981,
+   -0.0185,
+   0.9544
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0100",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   58.350067,
+   -64.238449,
+   -224.049866
+  ],
+  "row": 3,
+  "col": 1,
+  "bbox_center_mm": [
+   58.3413,
+   -64.238,
+   -224.0081
+  ],
+  "normal": [
+   -0.1956,
+   -0.0876,
+   0.9768
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0200",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   146.350067,
+   69.761551,
+   -101.208717
+  ],
+  "row": 3,
+  "col": 2,
+  "bbox_center_mm": [
+   146.3662,
+   69.7621,
+   -101.1209
+  ],
+  "normal": [
+   0.1695,
+   -0.1038,
+   0.98
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0300",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.3,
+  "depth_mm": 0.3,
+  "length_mm": 5.0,
+  "width_mm": 0.3,
+  "center_mm": [
+   170.350067,
+   143.761551,
+   -10.435493
+  ],
+  "row": 3,
+  "col": 3,
+  "bbox_center_mm": [
+   170.3471,
+   143.7619,
+   -10.2963
+  ],
+  "normal": [
+   -0.0206,
+   -0.0716,
+   0.9972
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0500",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   76.350067,
+   61.761551,
+   -63.324623
+  ],
+  "row": 3,
+  "col": 4,
+  "bbox_center_mm": [
+   76.4012,
+   61.7619,
+   -63.0946
+  ],
+  "normal": [
+   0.2086,
+   -0.0702,
+   0.9755
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_1000",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 1.0,
+  "depth_mm": 1.0,
+  "length_mm": 5.0,
+  "width_mm": 1.0,
+  "center_mm": [
+   -79.649933,
+   -46.238449,
+   -63.939064
+  ],
+  "row": 3,
+  "col": 5,
+  "bbox_center_mm": [
+   -79.597,
+   -46.2381,
+   -63.4649
+  ],
+  "normal": [
+   0.107,
+   -0.0672,
+   0.992
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_pore_shallow_0050",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.05,
+  "depth_mm": 0.025,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -39.649933,
+   -92.238449,
+   0.0
+  ],
+  "row": 0,
+  "col": 0,
+  "bbox_center_mm": [
+   -39.6499,
+   -92.2384,
+   -0.0125
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1983
+ },
+ {
+  "prim": "D_mach_pore_shallow_0100",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.1,
+  "depth_mm": 0.05,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   208.350067,
+   -158.238449,
+   8e-06
+  ],
+  "row": 0,
+  "col": 1,
+  "bbox_center_mm": [
+   208.3501,
+   -158.2384,
+   -0.022
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1392
+ },
+ {
+  "prim": "D_mach_pore_shallow_0200",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.2,
+  "depth_mm": 0.1,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -73.649933,
+   87.761551,
+   0.0
+  ],
+  "row": 0,
+  "col": 2,
+  "bbox_center_mm": [
+   -73.6499,
+   87.7616,
+   -0.05
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_shallow_0500",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.5,
+  "depth_mm": 0.25,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   106.350067,
+   -154.238449,
+   0.0
+  ],
+  "row": 0,
+  "col": 3,
+  "bbox_center_mm": [
+   106.3501,
+   -154.2384,
+   -0.1102
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1259
+ },
+ {
+  "prim": "D_mach_pore_shallow_1000",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 1.0,
+  "depth_mm": 0.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   36.350067,
+   -112.238449,
+   0.0
+  ],
+  "row": 0,
+  "col": 4,
+  "bbox_center_mm": [
+   36.3501,
+   -112.2384,
+   -0.0245
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 130
+ },
+ {
+  "prim": "D_mach_pore_shallow_2000",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 2.0,
+  "depth_mm": 1.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -109.649933,
+   -96.238449,
+   -8e-06
+  ],
+  "row": 0,
+  "col": 5,
+  "bbox_center_mm": [
+   -109.6499,
+   -96.2384,
+   -0.5
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1864
+ },
+ {
+  "prim": "D_mach_pore_deep_0050",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.05,
+  "depth_mm": 0.07500000000000001,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -19.649933,
+   83.761551,
+   0.0
+  ],
+  "row": 1,
+  "col": 0,
+  "bbox_center_mm": [
+   -19.6499,
+   83.7616,
+   -0.0265
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1024
+ },
+ {
+  "prim": "D_mach_pore_deep_0100",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.1,
+  "depth_mm": 0.15000000000000002,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   150.350067,
+   -156.238449,
+   0.0
+  ],
+  "row": 1,
+  "col": 1,
+  "bbox_center_mm": [
+   150.3501,
+   -156.2384,
+   -0.075
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 1344
+ },
+ {
+  "prim": "D_mach_pore_deep_0200",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.2,
+  "depth_mm": 0.30000000000000004,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -73.649933,
+   -114.238449,
+   0.0
+  ],
+  "row": 1,
+  "col": 2,
+  "bbox_center_mm": [
+   -73.6499,
+   -114.2384,
+   -0.0293
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 256
+ },
+ {
+  "prim": "D_mach_pore_deep_0500",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.5,
+  "depth_mm": 0.75,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -3.649933,
+   -94.238449,
+   0.0
+  ],
+  "row": 1,
+  "col": 3,
+  "bbox_center_mm": [
+   -3.6499,
+   -94.2384,
+   -0.0732
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 230
+ },
+ {
+  "prim": "D_mach_pore_deep_1000",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 1.0,
+  "depth_mm": 1.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   176.350067,
+   -158.238449,
+   0.0
+  ],
+  "row": 1,
+  "col": 4,
+  "bbox_center_mm": [
+   176.3501,
+   -158.2384,
+   -0.1463
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 208
+ },
+ {
+  "prim": "D_mach_pore_deep_2000",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 2.0,
+  "depth_mm": 3.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -81.649933,
+   -90.238449,
+   -8e-06
+  ],
+  "row": 1,
+  "col": 5,
+  "bbox_center_mm": [
+   -81.6499,
+   -90.2384,
+   -0.147
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 281
+ },
+ {
+  "prim": "D_mach_scratch_0010",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.01,
+  "depth_mm": 0.01,
+  "length_mm": 5.0,
+  "width_mm": 0.01,
+  "center_mm": [
+   -95.649933,
+   -114.238449,
+   0.0
+  ],
+  "row": 2,
+  "col": 0,
+  "bbox_center_mm": [
+   -95.6499,
+   -114.2384,
+   -0.005
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_scratch_0020",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.02,
+  "depth_mm": 0.02,
+  "length_mm": 5.0,
+  "width_mm": 0.02,
+  "center_mm": [
+   128.350067,
+   -156.238449,
+   8e-06
+  ],
+  "row": 2,
+  "col": 1,
+  "bbox_center_mm": [
+   128.3501,
+   -156.2384,
+   -0.01
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 28
+ },
+ {
+  "prim": "D_mach_scratch_0050",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   -107.649933,
+   -76.238449,
+   0.0
+  ],
+  "row": 2,
+  "col": 2,
+  "bbox_center_mm": [
+   -107.6499,
+   -76.2384,
+   -0.025
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 20
+ },
+ {
+  "prim": "D_mach_scratch_0100",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   -57.649933,
+   79.761551,
+   0.0
+  ],
+  "row": 2,
+  "col": 3,
+  "bbox_center_mm": [
+   -57.6499,
+   79.7616,
+   -0.05
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 18
+ },
+ {
+  "prim": "D_mach_scratch_0200",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   192.350067,
+   -156.238449,
+   0.0
+  ],
+  "row": 2,
+  "col": 4,
+  "bbox_center_mm": [
+   192.3501,
+   -156.2384,
+   -0.1
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 18
+ },
+ {
+  "prim": "D_mach_scratch_0500",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   -23.649933,
+   -92.238449,
+   0.0
+  ],
+  "row": 2,
+  "col": 5,
+  "bbox_center_mm": [
+   -23.6499,
+   -92.2384,
+   -0.25
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 20
+ },
+ {
+  "prim": "D_mach_burr_0050",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   42.350067,
+   -126.238449,
+   0.0
+  ],
+  "row": 3,
+  "col": 0,
+  "bbox_center_mm": [
+   42.3501,
+   -126.2384,
+   0.02
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0100",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   -95.649933,
+   -86.238449,
+   0.0
+  ],
+  "row": 3,
+  "col": 1,
+  "bbox_center_mm": [
+   -95.6499,
+   -86.2384,
+   0.045
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0200",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   -33.649933,
+   79.761551,
+   8e-06
+  ],
+  "row": 3,
+  "col": 2,
+  "bbox_center_mm": [
+   -33.6499,
+   79.7616,
+   0.095
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0300",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.3,
+  "depth_mm": 0.3,
+  "length_mm": 5.0,
+  "width_mm": 0.3,
+  "center_mm": [
+   -105.649933,
+   -108.238449,
+   0.0
+  ],
+  "row": 3,
+  "col": 3,
+  "bbox_center_mm": [
+   -105.6499,
+   -108.2384,
+   0.145
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0500",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   -85.649933,
+   -110.238449,
+   0.0
+  ],
+  "row": 3,
+  "col": 4,
+  "bbox_center_mm": [
+   -85.6499,
+   -110.2384,
+   0.245
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_1000",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 1.0,
+  "depth_mm": 1.0,
+  "length_mm": 5.0,
+  "width_mm": 1.0,
+  "center_mm": [
+   -107.649933,
+   -86.238449,
+   -8e-06
+  ],
+  "row": 3,
+  "col": 5,
+  "bbox_center_mm": [
+   -107.6499,
+   -86.2384,
+   0.495
+  ],
+  "normal": [
+   0.0,
+   0.0,
+   1.0
+  ],
+  "n_faces": 16
+ }
+]

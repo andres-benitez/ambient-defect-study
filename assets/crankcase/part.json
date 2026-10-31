@@ -1,0 +1,42 @@
+{
+ "kind": "part",
+ "extent_mm": [
+  515.2998657226562,
+  336.4768981933594,
+  299.482177734375
+ ],
+ "bbox_min_mm": [
+  -257.6499328613281,
+  -168.2384490966797,
+  -275.80855374763996
+ ],
+ "bbox_max_mm": [
+  257.6499328613281,
+  168.2384490966797,
+  23.673623986735038
+ ],
+ "machined_extent_mm": [
+  405.05908203125,
+  282.18695068359375,
+  0.0
+ ],
+ "machined_area_mm2": 5198.911543870345,
+ "zone_prims": {
+  "cast": "Part_Cast",
+  "machined": "Part_Machined"
+ },
+ "reference_plane_z_mm": 0.0,
+ "source": {
+  "file": "assets/crankcase/source/engine_cylinder_block.glb",
+  "name": "Engine Cylinder Block",
+  "author": "3dscantech",
+  "url": "https://sketchfab.com/3d-models/0ce38e5e3aa94a65bb79c60e0535f225",
+  "license": "CC BY 4.0"
+ },
+ "stitch_boundary_edges": 4947,
+ "tris": {
+  "machined": 5978,
+  "cast": 2431736
+ },
+ "flattened_machined": true
+}
