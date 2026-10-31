@@ -106,19 +106,31 @@ def main():
             missing_big.append(prim)
     if missing_big:
         fail("masks", f"defects with footprint >= 2 px missing from id_map.json: {missing_big}")
-    # mask alignment: centroid vs projected centre for defects with area >= 9 px
-    offsets = []
+    # mask alignment: centroid vs projected centre for defects with area >= 9 px. Raised burrs sit
+    # above z = 0, so their apex parallaxes outward by height x off-axis distance / working distance;
+    # that amount is allowed on top of the 2 px tolerance.
+    # Only defects at least 2 px wide are checked: a sub-pixel-wide line rasterises to a sparse
+    # set of pixels whose centroid wanders along its length.
+    offsets, excess = [], []
     for prim, m in defect_masks.items():
-        if m.sum() >= 9:
+        d0 = layout[prim]
+        width_px = (d0.size_mm if d0.type.startswith("pore") else d0.width_mm) / cam.mm_per_px
+        if m.sum() >= 9 and width_px >= 2.0:
             cy, cx = ndimage.center_of_mass(m)
             u, v = centers[prim]
-            offsets.append(float(np.hypot(cx + 0.5 - u, cy + 0.5 - v)))
+            off = float(np.hypot(cx + 0.5 - u, cy + 0.5 - v))
+            d = layout[prim]
+            height_mm = d.size_mm if d.type == "burr" else 0.0
+            parallax_px = height_mm * float(np.hypot(*d.center_mm)) / cam.distance_mm / cam.mm_per_px
+            offsets.append(off)
+            excess.append(off - parallax_px)
     max_off = max(offsets) if offsets else float("nan")
-    if offsets and max_off > 2.0:
-        fail("mask_alignment", f"mask centroid vs projected centre differs by up to {max_off:.2f} px")
+    max_excess = max(excess) if excess else float("nan")
+    if excess and max_excess > 2.0:
+        fail("mask_alignment", f"mask centroid vs projected centre differs by up to {max_excess:.2f} px beyond the expected burr parallax")
     checks["masks"] = {"pass": not missing_big, "n_prims_in_id_map": sum(p in id_map["prim_to_ids"] for p in layout),
                        "n_defects": len(layout), "missing": [p for p in layout if p not in id_map["prim_to_ids"]],
-                       "max_centroid_offset_px": max_off, "n_aligned_checked": len(offsets)}
+                       "max_centroid_offset_px": max_off, "max_offset_beyond_parallax_px": max_excess, "n_aligned_checked": len(offsets)}
 
     # ---- gain from frame 0
     Y0 = luminance(load_hdr(renders, 0))
