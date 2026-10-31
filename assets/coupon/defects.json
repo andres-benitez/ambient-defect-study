@@ -1,0 +1,962 @@
+[
+ {
+  "prim": "D_cast_pore_shallow_0050",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.05,
+  "depth_mm": 0.025,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -55.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 0,
+  "bbox_center_mm": [
+   -55.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_shallow_0100",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.1,
+  "depth_mm": 0.05,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -45.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 1,
+  "bbox_center_mm": [
+   -45.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_shallow_0200",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.2,
+  "depth_mm": 0.1,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -35.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 2,
+  "bbox_center_mm": [
+   -35.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_shallow_0500",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 0.5,
+  "depth_mm": 0.25,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -25.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 3,
+  "bbox_center_mm": [
+   -25.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_shallow_1000",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 1.0,
+  "depth_mm": 0.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -15.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 4,
+  "bbox_center_mm": [
+   -15.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_shallow_2000",
+  "zone": "cast",
+  "type": "pore_shallow",
+  "size_mm": 2.0,
+  "depth_mm": 1.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -5.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 5,
+  "bbox_center_mm": [
+   -5.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_deep_0050",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.05,
+  "depth_mm": 0.07500000000000001,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -55.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 0,
+  "bbox_center_mm": [
+   -55.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_deep_0100",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.1,
+  "depth_mm": 0.15000000000000002,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -45.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 1,
+  "bbox_center_mm": [
+   -45.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_deep_0200",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.2,
+  "depth_mm": 0.30000000000000004,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -35.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 2,
+  "bbox_center_mm": [
+   -35.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_deep_0500",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 0.5,
+  "depth_mm": 0.75,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -25.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 3,
+  "bbox_center_mm": [
+   -25.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_deep_1000",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 1.0,
+  "depth_mm": 1.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -15.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 4,
+  "bbox_center_mm": [
+   -15.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_pore_deep_2000",
+  "zone": "cast",
+  "type": "pore_deep",
+  "size_mm": 2.0,
+  "depth_mm": 3.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   -5.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 5,
+  "bbox_center_mm": [
+   -5.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_cast_scratch_0010",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.01,
+  "depth_mm": 0.01,
+  "length_mm": 5.0,
+  "width_mm": 0.01,
+  "center_mm": [
+   -55.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 0,
+  "bbox_center_mm": [
+   -55.0,
+   -5.0
+  ],
+  "n_faces": 6
+ },
+ {
+  "prim": "D_cast_scratch_0020",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.02,
+  "depth_mm": 0.02,
+  "length_mm": 5.0,
+  "width_mm": 0.02,
+  "center_mm": [
+   -45.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 1,
+  "bbox_center_mm": [
+   -45.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_cast_scratch_0050",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   -35.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 2,
+  "bbox_center_mm": [
+   -35.0,
+   -5.0
+  ],
+  "n_faces": 8
+ },
+ {
+  "prim": "D_cast_scratch_0100",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   -25.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 3,
+  "bbox_center_mm": [
+   -25.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_cast_scratch_0200",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   -15.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 4,
+  "bbox_center_mm": [
+   -15.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_cast_scratch_0500",
+  "zone": "cast",
+  "type": "scratch",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   -5.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 5,
+  "bbox_center_mm": [
+   -5.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_cast_burr_0050",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   -55.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 0,
+  "bbox_center_mm": [
+   -55.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0100",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   -45.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 1,
+  "bbox_center_mm": [
+   -45.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0200",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   -35.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 2,
+  "bbox_center_mm": [
+   -35.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0300",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.3,
+  "depth_mm": 0.3,
+  "length_mm": 5.0,
+  "width_mm": 0.3,
+  "center_mm": [
+   -25.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 3,
+  "bbox_center_mm": [
+   -25.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_0500",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   -15.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 4,
+  "bbox_center_mm": [
+   -15.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_cast_burr_1000",
+  "zone": "cast",
+  "type": "burr",
+  "size_mm": 1.0,
+  "depth_mm": 1.0,
+  "length_mm": 5.0,
+  "width_mm": 1.0,
+  "center_mm": [
+   -5.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 5,
+  "bbox_center_mm": [
+   -5.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_pore_shallow_0050",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.05,
+  "depth_mm": 0.025,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   5.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 0,
+  "bbox_center_mm": [
+   5.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_shallow_0100",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.1,
+  "depth_mm": 0.05,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   15.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 1,
+  "bbox_center_mm": [
+   15.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_shallow_0200",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.2,
+  "depth_mm": 0.1,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   25.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 2,
+  "bbox_center_mm": [
+   25.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_shallow_0500",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 0.5,
+  "depth_mm": 0.25,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   35.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 3,
+  "bbox_center_mm": [
+   35.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_shallow_1000",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 1.0,
+  "depth_mm": 0.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   45.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 4,
+  "bbox_center_mm": [
+   45.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_shallow_2000",
+  "zone": "machined",
+  "type": "pore_shallow",
+  "size_mm": 2.0,
+  "depth_mm": 1.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   55.0,
+   15.0
+  ],
+  "row": 0,
+  "col": 5,
+  "bbox_center_mm": [
+   55.0,
+   15.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_deep_0050",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.05,
+  "depth_mm": 0.07500000000000001,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   5.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 0,
+  "bbox_center_mm": [
+   5.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_deep_0100",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.1,
+  "depth_mm": 0.15000000000000002,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   15.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 1,
+  "bbox_center_mm": [
+   15.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_deep_0200",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.2,
+  "depth_mm": 0.30000000000000004,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   25.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 2,
+  "bbox_center_mm": [
+   25.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_deep_0500",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 0.5,
+  "depth_mm": 0.75,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   35.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 3,
+  "bbox_center_mm": [
+   35.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_deep_1000",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 1.0,
+  "depth_mm": 1.5,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   45.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 4,
+  "bbox_center_mm": [
+   45.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_pore_deep_2000",
+  "zone": "machined",
+  "type": "pore_deep",
+  "size_mm": 2.0,
+  "depth_mm": 3.0,
+  "length_mm": null,
+  "width_mm": null,
+  "center_mm": [
+   55.0,
+   5.0
+  ],
+  "row": 1,
+  "col": 5,
+  "bbox_center_mm": [
+   55.0,
+   5.0
+  ],
+  "n_faces": 1984
+ },
+ {
+  "prim": "D_mach_scratch_0010",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.01,
+  "depth_mm": 0.01,
+  "length_mm": 5.0,
+  "width_mm": 0.01,
+  "center_mm": [
+   5.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 0,
+  "bbox_center_mm": [
+   5.0,
+   -5.0
+  ],
+  "n_faces": 6
+ },
+ {
+  "prim": "D_mach_scratch_0020",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.02,
+  "depth_mm": 0.02,
+  "length_mm": 5.0,
+  "width_mm": 0.02,
+  "center_mm": [
+   15.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 1,
+  "bbox_center_mm": [
+   15.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_mach_scratch_0050",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   25.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 2,
+  "bbox_center_mm": [
+   25.0,
+   -5.0
+  ],
+  "n_faces": 8
+ },
+ {
+  "prim": "D_mach_scratch_0100",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   35.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 3,
+  "bbox_center_mm": [
+   35.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_mach_scratch_0200",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   45.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 4,
+  "bbox_center_mm": [
+   45.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_mach_scratch_0500",
+  "zone": "machined",
+  "type": "scratch",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   55.0,
+   -5.0
+  ],
+  "row": 2,
+  "col": 5,
+  "bbox_center_mm": [
+   55.0,
+   -5.0
+  ],
+  "n_faces": 7
+ },
+ {
+  "prim": "D_mach_burr_0050",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.05,
+  "depth_mm": 0.05,
+  "length_mm": 5.0,
+  "width_mm": 0.05,
+  "center_mm": [
+   5.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 0,
+  "bbox_center_mm": [
+   5.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0100",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.1,
+  "depth_mm": 0.1,
+  "length_mm": 5.0,
+  "width_mm": 0.1,
+  "center_mm": [
+   15.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 1,
+  "bbox_center_mm": [
+   15.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0200",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.2,
+  "depth_mm": 0.2,
+  "length_mm": 5.0,
+  "width_mm": 0.2,
+  "center_mm": [
+   25.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 2,
+  "bbox_center_mm": [
+   25.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0300",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.3,
+  "depth_mm": 0.3,
+  "length_mm": 5.0,
+  "width_mm": 0.3,
+  "center_mm": [
+   35.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 3,
+  "bbox_center_mm": [
+   35.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_0500",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 0.5,
+  "depth_mm": 0.5,
+  "length_mm": 5.0,
+  "width_mm": 0.5,
+  "center_mm": [
+   45.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 4,
+  "bbox_center_mm": [
+   45.0,
+   -15.0
+  ],
+  "n_faces": 16
+ },
+ {
+  "prim": "D_mach_burr_1000",
+  "zone": "machined",
+  "type": "burr",
+  "size_mm": 1.0,
+  "depth_mm": 1.0,
+  "length_mm": 5.0,
+  "width_mm": 1.0,
+  "center_mm": [
+   55.0,
+   -15.0
+  ],
+  "row": 3,
+  "col": 5,
+  "bbox_center_mm": [
+   55.0,
+   -15.0
+  ],
+  "n_faces": 16
+ }
+]

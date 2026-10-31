@@ -1,0 +1,97 @@
+# Ambient-light defect detectability experiment: every parameter lives here.
+# Units: mm for geometry and pixel scale, metres for the lighting rig, Kelvin for colour temperature.
+seed: 1234
+
+coupon:
+  plate_mm: [120, 80, 10]        # full coupon (two zones side by side along x)
+  pitch_mm: 10                   # defect grid pitch
+  margin_mm: 5                   # margin from zone edges to the first grid cell edge
+  zones: [cast, machined]        # zone order along +x (left -> right)
+  uv_tile_mm: 20                 # one UV tile = 20 mm (cube projection)
+  burr_root_mm: 0.01             # burrs extend this far into the plate so the base is never coplanar
+
+defects:
+  # Row order on the coupon (row 0 at the top edge, +y). Column 0 is the smallest size.
+  pore_shallow: {diam_mm: [0.05, 0.1, 0.2, 0.5, 1.0, 2.0], depth_ratio: 0.5}
+  pore_deep:    {diam_mm: [0.05, 0.1, 0.2, 0.5, 1.0, 2.0], depth_ratio: 1.5}
+  scratch:      {width_mm: [0.01, 0.02, 0.05, 0.1, 0.2, 0.5], length_mm: 5, depth_ratio: 1.0}
+  burr:         {height_mm: [0.05, 0.1, 0.2, 0.3, 0.5, 1.0], length_mm: 5, width_ratio: 1.0}
+
+materials:
+  cast:     {base_color: [0.55, 0.56, 0.58], roughness: 0.70, normal_strength: 1.0,
+             normal_map: assets/coupon/cast_normal.png}
+  machined: {base_color: [0.85, 0.86, 0.88], roughness: 0.25, anisotropy: 0.0}
+  floor:    {albedo: 0.30, roughness: 0.90, size_m: [4, 4], drop_m: 1.0}
+
+textures:
+  cast_normal: {resolution: 2048, slope_deg: 5.0, octaves: 6, lacunarity: 2.0, gain: 0.55,
+                base_period_px: 256}
+
+lighting:
+  mode: panel                    # panel | hdri | directional (directional is the positive control)
+  panel: {size_m: [3, 3], height_m: 3, color_temp_k: 4500}
+  dome_fraction: 0.15            # dome radiance relative to the panel radiance
+  hdri: {path: null, rotation_deg: 0}
+  directional: {elevation_deg: 15, azimuth_deg: 90, angle_deg: 0.5}
+  probe_spp: 64                  # spp for the intensity-solving probe frame
+  solve_target: 0.40             # machined background linear radiance after solving (sensor gain 1.0)
+
+camera:
+  mm_per_px: 0.12
+  resolution: [2448, 2048]
+  focal_length_mm: 25
+  sensor_width_mm: 8.4
+  f_number: 8
+  view: nadir                    # nadir | oblique30
+  oblique_tilt_deg: 30
+
+render:
+  mode: pathtracing
+  spp: 512                       # starting spp; raised automatically when the render-noise check fails
+  spp_per_subframe: 32           # rt_subframes = spp / spp_per_subframe
+  auto_spp: true                 # escalate spp until render noise < checks.render_noise_frac x sensor noise
+  max_spp: 16384
+  denoiser: false
+  max_bounces: 8
+  max_specular_bounces: 8
+  frames_per_condition: 3
+
+sensor:
+  target_bg_level: 0.40
+  full_well_e: 10000
+  read_noise_e: 3
+  bit_depth: 8
+
+threshold: {cnr: 3.0, min_area_px: 3, marginal_cnr: 2.0}
+
+analysis:
+  bg_annulus_px: [3, 10]         # background ring: from 3 px to 10 px outside the dilated mask
+  mask_dilate_px: 1
+  fallback_window_px: 3          # window used when a defect mask is empty (sub-pixel defect)
+  contact_crop_mm: 3.0           # half-size of the contact-sheet crop around each defect
+  contact_zoom: 8
+
+checks:
+  plate_tol_mm: 0.01
+  center_tol_mm: 0.05
+  scale_tol_frac: 0.01
+  exposure_range: [0.35, 0.45]
+  max_saturated_frac: 0.001
+  render_noise_frac: 0.20
+  determinism_tol_frac: 0.02
+
+# Conditions override the base config above (deep merge). `default: true` marks the one
+# `run_all.py` runs when no --condition is given; `control: true` keeps a condition out of the figures.
+conditions:
+  ambient_nadir_012:
+    default: true
+  ambient_nadir_005:
+    camera: {mm_per_px: 0.05}
+  ambient_oblique_012:
+    camera: {view: oblique30}
+  ambient_hdri_012:
+    lighting: {mode: hdri}
+  control_darkfield:
+    control: true
+    lighting: {mode: directional}
+    render: {frames_per_condition: 1}

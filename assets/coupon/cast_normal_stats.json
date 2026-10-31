@@ -1,0 +1,10 @@
+{
+ "slope_rms_deg": 5.0,
+ "slope_p99_deg": 13.65806749956541,
+ "height_rms_um": 9.232734566249375,
+ "height_pp_um": 26.94446437184403,
+ "resolution": 2048,
+ "texel_um": 9.765625,
+ "tile_mm": 20,
+ "file": "assets/coupon/cast_normal.png"
+}

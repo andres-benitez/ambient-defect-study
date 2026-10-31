@@ -1,0 +1,7 @@
+out/
+assets/coupon/*.npy
+assets/coupon/coupon.blend
+assets/coupon/coupon.blend1
+__pycache__/
+*.pyc
+.pytest_cache/
