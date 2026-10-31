@@ -19,11 +19,14 @@ part:                            # real-part proxy built by blender/make_part.py
   source_units_per_mm: 1.0       # the scan is in millimetres
   expected_extent_mm: [100, 2000] # sanity check on the imported size
   merge_mm: 0.02                 # vertex merge distance to stitch the scan's mesh chunks
+  carve_margin_mm: 1.2           # scan faces within this margin of a defect footprint are replaced by the cavity collar
   long_axis: x                   # rotate so the longest horizontal extent runs along x (landscape sensor)
   machined:                      # the largest planar region facing the camera becomes the machined zone
-    normal_tol_deg: 10
+    normal_tol_deg: 10             # to find the plane
+    fill_tol_deg: 45               # to assign faces of the band to the machined zone (fills scan notches)
     plane_band_mm: 1.5
     flatten: true                # project its vertices onto the fitted plane (the scan cannot resolve a machined finish)
+  replanarize: {cell_mm: 0.5, close_mm: 1.5, halo_cells: 1, lift_mm: 0.02}  # raster rebuild of the flattened zone as a clean plane
   sites:                         # where the 48 defects go
     grid_mm: 2.0
     clearance_mm: 4.0            # distance to the zone boundary / holes (scratches and burrs are 5 mm long)

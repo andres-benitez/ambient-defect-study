@@ -160,14 +160,30 @@ Run them with `python run_all.py --condition cam_a2A2448` (and the other `cam_*`
 `blender/make_part.py` puts the same 48 defects on a real part: `part.source` (a glTF/STL/OBJ mesh;
 the default is the CC BY "Engine Cylinder Block" scan by 3dscantech from Sketchfab via Objaverse,
 stored under `assets/crankcase/source/`, not committed). It stitches the mesh, finds the largest
-planar region that can face the camera, rotates the part so that region is horizontal at z = 0 and
-flattens it (the machined zone), keeps everything else as scanned cast geometry, chooses defect
-sites by ray casting (locally flat, camera-facing, clear of edges and holes), cuts pores and
-scratches with exact booleans and adds burrs as ridges. Output: `assets/crankcase/crankcase.usd`,
+planar region that can face the camera, rotates the part so that region is horizontal at z = 0,
+rebuilds that region as a clean plane from a raster of its footprint (the machined zone; a scan
+cannot represent a machined finish and its flattened triangles overlap), keeps everything else as
+scanned cast geometry, chooses defect sites by ray casting (locally flat, camera-facing, clear of
+edges and holes), and carves pores and scratches **without booleans**: the scan faces under each
+footprint are deleted, the exact cavity surface is built as its own object, and a collar bridges its
+rim to the hole (shared rim coordinates, no cracks). Booleans are unreliable on an open scan shell
+(no inside volume), which is why the coupon keeps them and the part does not. Burrs are ridges. Output: `assets/crankcase/crankcase.usd`,
 `defects.json` (3-D centres), `part.json` (extent, zone prims, source and licence). Conditions
 `part_5mp` and `part_18mp` render the whole part in one shot (`framing.fov_mm: 620`) with the
 client's 5 MP class and the best in-budget candidate. `asset:` in the config (or a condition) selects
 coupon or part.
+
+Scan-specific details worth knowing: the glTF importer rescales geometry into the scene's unit
+system, so the generator imports before switching the scene to millimetres and checks the imported
+extent against `part.expected_extent_mm`; the scan's custom per-vertex normals are discarded
+(otherwise a flattened face still shades as bumpy) and the machined zone is shaded flat, the cast
+zone smooth by angle; the machined zone is every face within `plane_band_mm` of the fitted plane
+whose normal is within `fill_tol_deg` of vertical (a wider tolerance than the one used to find the
+plane, so the notches a noisy scan leaves inside a flange are filled), then rasterised at
+`part.replanarize.cell_mm`, morphologically closed, grown by one cell and lifted 20 um so the plane
+overlaps the cast boundary instead of leaving gaps; the scale check compares the machined zone's
+pixel width with `machined_extent_mm`, because the rest of the part lies below the reference plane
+and is foreshortened; `check_part.py` replaces `checks.py`.
 
 ## Layout
 

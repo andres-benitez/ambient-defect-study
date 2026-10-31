@@ -16,8 +16,8 @@
   23.673623986735038
  ],
  "machined_extent_mm": [
-  405.05908203125,
-  282.18695068359375,
+  413.0,
+  284.5,
   0.0
  ],
  "machined_area_mm2": 5198.911543870345,
@@ -35,8 +35,8 @@
  },
  "stitch_boundary_edges": 4947,
  "tris": {
-  "machined": 5978,
-  "cast": 2431736
+  "cast": 2422644,
+  "machined": 66426
  },
  "flattened_machined": true
 }

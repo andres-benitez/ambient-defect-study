@@ -25,6 +25,9 @@ def flat_patch_std(Y: np.ndarray, bg_mask: np.ndarray, patch: int = 24, max_patc
         r0, c0 = ys[i] - patch // 2, xs[i] - patch // 2
         p = Y[r0 : r0 + patch, c0 : c0 + patch].astype(np.float64)
         coef = np.linalg.lstsq(A, p.ravel(), rcond=None)[0]
-        stds.append((p.ravel() - A @ coef).std(ddof=3))
-        means.append(p.mean())
+        res = p.ravel() - A @ coef
+        # robust spread (1.4826 x MAD equals the std for Gaussian noise) so a few edge or hole pixels
+        # inside a patch do not masquerade as render noise
+        stds.append(1.4826 * float(np.median(np.abs(res - np.median(res)))))
+        means.append(float(np.median(p)))
     return {"std": float(np.median(stds)), "level": float(np.median(means)), "n_patches": int(len(idx)), "patch_px": patch}
