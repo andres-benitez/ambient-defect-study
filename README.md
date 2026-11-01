@@ -19,10 +19,14 @@ It is not a model-training exercise. CNR is the ceiling any detector can reach.
 | Docker + NVIDIA Container Toolkit | `docker run --gpus all` must work | runs Isaac Sim headless |
 | Python | 3.10+ with `requirements.txt` | analysis, orchestration |
 | GPU | one RTX (developed on an RTX 5080, 16 GB) | rendering |
+| Git LFS | any recent `git-lfs` | holds `assets/crankcase/crankcase.usd` (136 MB); without it a clone gets a 134-byte pointer file |
 
 Install:
 
 ```bash
+# Clone (Git LFS must be installed first so the crankcase USD is downloaded)
+git lfs install
+git clone https://github.com/andres-benitez/ambient-defect-study.git
 # Blender: download the 5.2 LTS tarball from blender.org, unpack, put `blender` on PATH.
 # Isaac Sim: docker login nvcr.io, then
 docker pull nvcr.io/nvidia/isaac-sim:6.2.0
