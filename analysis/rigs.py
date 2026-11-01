@@ -85,20 +85,27 @@ def main():
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.savefig(os.path.join(args.out, "figures", "rigs_min_detectable.png"), dpi=160, facecolor=SURFACE)
     plt.close(fig)
-    # figure: CNR ratio vs ambient per rig, by type (median over sizes with footprint)
-    fig, ax = plt.subplots(figsize=(10, 4.4), facecolor=SURFACE)
-    style_axes(ax)
+    # figure: CNR ratio vs ambient per rig, by type, one panel per surface (the two move in opposite ways)
+    from matplotlib.ticker import FixedLocator, FuncFormatter, NullFormatter
+    rig_list = [c for c in order if c != "ambient_nadir_012"]
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.6), facecolor=SURFACE, sharey=True)
     x = np.arange(len(types))
-    for i, c in enumerate([c for c in order if c != "ambient_nadir_012"]):
-        vals = [s[(s.condition == c) & (s.type == t)].median_cnr_ratio_vs_ambient.median() for t in types]
-        ax.bar(x + (i - 2) * 0.15, vals, width=0.14, label=RIG_LABEL.get(c, c), color=plt.cm.viridis(i / 5))
-    ax.axhline(1, color=MUTED, linewidth=1)
-    ax.set_yscale("log")
-    ax.set_xticks(x, [t.replace("_", " ") for t in types])
-    ax.set_ylabel("CNR relative to the ambient ceiling (median)", color=INK2, fontsize=9)
-    ax.legend(frameon=False, fontsize=8, labelcolor=INK2)
-    ax.set_title("What each rig buys relative to ambient light", loc="left", color=INK, fontsize=11)
-    fig.tight_layout()
+    for ax, zone in zip(axes, ("machined", "cast")):
+        style_axes(ax)
+        for i, c in enumerate(rig_list):
+            vals = [s[(s.condition == c) & (s.type == t) & (s.zone == zone)].median_cnr_ratio_vs_ambient.median() for t in types]
+            ax.bar(x + (i - (len(rig_list) - 1) / 2) * 0.15, vals, width=0.14, label=RIG_LABEL.get(c, c), color=plt.cm.viridis(i / max(len(rig_list) - 1, 1)))
+        ax.axhline(1, color=MUTED, linewidth=1)
+        ax.set_yscale("log")
+        ax.yaxis.set_major_locator(FixedLocator([0.2, 0.3, 0.5, 0.7, 1, 1.5, 2, 3, 4, 6, 8, 12, 16]))
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}×"))
+        ax.yaxis.set_minor_formatter(NullFormatter())
+        ax.set_xticks(x, [t.replace("_", " ") for t in types])
+        ax.set_title(f"{zone} face", loc="left", color=INK, fontsize=10)
+    axes[0].set_ylabel("CNR relative to the ambient ceiling (median over sizes)", color=INK2, fontsize=9)
+    axes[1].legend(frameon=False, fontsize=8, labelcolor=INK2)
+    fig.suptitle("What each rig buys relative to the ambient ceiling, by surface", color=INK, fontsize=11, x=0.01, ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
     fig.savefig(os.path.join(args.out, "figures", "rigs_cnr_ratio.png"), dpi=160, facecolor=SURFACE)
     plt.close(fig)
     pd.set_option("display.width", 220)

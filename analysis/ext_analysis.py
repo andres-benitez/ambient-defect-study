@@ -17,6 +17,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.ticker import NullFormatter  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
@@ -37,7 +38,7 @@ def main():
     thr = float(cfg["threshold"]["cnr"])
     min_area = int(cfg["threshold"]["min_area_px"])
     m = pd.read_csv(os.path.join(args.out, "metrics.csv"))
-    m = m[(m.frame == 0) & (m.lens == cfg["lens"].get("default_scenario", "none")) & (m.condition.isin(["ext_nadir_012", "ext_nadir_005"]))]
+    m = m[(m.frame == 0) & (m.lens == cfg["lens"].get("default_scenario", "none")) & (m.condition.isin(["ext_nadir_012", "ext_nadir_005", "ext_ring60_012", "ext_ring30_012", "ext_dir_012"]))]
     if m.empty:
         raise SystemExit("no ext_* conditions in metrics.csv")
     m = m.assign(detectable=(m.cnr >= thr) & (m.area_px >= min_area))
@@ -58,6 +59,7 @@ def main():
         ax.axhline(thr, color=MUTED, linestyle=(0, (4, 3)), linewidth=1.2)
         ax.set_xscale("log")
         ax.set_xticks([0.5, 1, 1.5, 2, 3, 4], ["0.5", "1", "1.5", "2", "3", "4"])
+        ax.xaxis.set_minor_formatter(NullFormatter())
         ax.set_xlabel("dent diameter, mm", color=INK2, fontsize=9)
         ax.set_title(f"{float(g0.mm_per_px.iloc[0])*1000:.0f} µm per pixel", loc="left", color=INK, fontsize=10)
         for typ in ("dent_shallow", "dent_deep"):
@@ -70,6 +72,48 @@ def main():
     fig.tight_layout(rect=(0, 0, 1, 0.93))
     fig.savefig(os.path.join(args.out, "figures", "dents.png"), dpi=160, facecolor=SURFACE)
     plt.close(fig)
+    # ---- dents under lighting rigs: the same plate under a 30° ring and a single 15° light
+    rig_labels = {"ext_nadir_012": "ambient ceiling", "ext_ring60_012": "ring light, 60° elevation", "ext_ring30_012": "ring light, 30° elevation", "ext_dir_012": "single light, 15° (dark field)"}
+    rig_conds = [c for c in rig_labels if c in set(m.condition)]
+    if len(rig_conds) > 1:
+        dr = m[m.type.isin(["dent_shallow", "dent_deep"]) & m.condition.isin(rig_conds)]
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5.4), facecolor=SURFACE, sharey=True)
+        for ax, zone in zip(axes, ("machined", "cast")):
+            style_axes(ax)
+            for i, cond in enumerate(rig_conds):
+                for typ, ls in (("dent_shallow", "-"), ("dent_deep", "--")):
+                    g = dr[(dr.condition == cond) & (dr.zone == zone) & (dr.type == typ)].sort_values("size_mm")
+                    if g.empty:
+                        continue
+                    ax.plot(g.size_mm, np.maximum(g.cnr, 0.1), ls, marker="o", color=plt.cm.viridis(i / max(len(rig_conds) - 1, 1)), linewidth=2, markersize=5,
+                            label=f"{rig_labels[cond]}, {'3 %' if typ == 'dent_shallow' else '10 %'} deep")
+            ax.axhline(thr, color=MUTED, linestyle=(0, (4, 3)), linewidth=1.2)
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+            ax.set_xticks([0.5, 1, 1.5, 2, 3, 4], ["0.5", "1", "1.5", "2", "3", "4"])
+            ax.set_yticks([0.3, 1, 3, 10, 30, 100], ["0.3", "1", "3", "10", "30", "100"])
+            ax.xaxis.set_minor_formatter(NullFormatter())
+            ax.yaxis.set_minor_formatter(NullFormatter())
+            ax.set_xlabel("dent diameter, mm", color=INK2, fontsize=9)
+            ax.set_title(f"{zone} face, 120 µm per pixel", loc="left", color=INK, fontsize=10)
+            for cond in rig_conds:
+                for typ in ("dent_shallow", "dent_deep"):
+                    g = dr[(dr.condition == cond) & (dr.zone == zone) & (dr.type == typ) & dr.detectable]
+                    summary[f"{cond}/{typ}/{zone}/min_detectable_mm"] = float(g.size_mm.min()) if len(g) else None
+            amb = dr[(dr.condition == "ext_nadir_012") & (dr.zone == zone)].set_index("prim")
+            for cond in rig_conds:
+                g = dr[(dr.condition == cond) & (dr.zone == zone) & (dr.area_px > 0)].set_index("prim")
+                ratio = (g.cnr / amb.cnr.reindex(g.index)).replace([np.inf, -np.inf], np.nan)
+                summary[f"{cond}/dents/{zone}/median_cnr_ratio_vs_ambient"] = float(np.nanmedian(ratio.values)) if len(ratio) and np.isfinite(ratio).any() else None
+                summary[f"{cond}/dents/{zone}/n_detectable"] = int(dr[(dr.condition == cond) & (dr.zone == zone) & dr.detectable].shape[0])
+        axes[0].set_ylabel("CNR (log scale)", color=INK2, fontsize=9)
+        handles, labels_ = axes[1].get_legend_handles_labels()
+        fig.legend(handles, labels_, frameon=False, fontsize=8, labelcolor=INK2, loc="lower center", ncol=4, bbox_to_anchor=(0.5, 0.0))
+        fig.suptitle("Dents under the ambient ceiling and three rigs: a 60° ring, a 30° ring and a single 15° light (solid: depth 3 % of the diameter, dashed: 10 %)", color=INK, fontsize=11, x=0.01, ha="left")
+        fig.tight_layout(rect=(0, 0.12, 1, 0.93))
+        fig.savefig(os.path.join(args.out, "figures", "dents_rigs.png"), dpi=160, facecolor=SURFACE)
+        plt.close(fig)
+        summary["dent_rig_conditions"] = rig_conds
     # ---- scratch envelope: grid length (rows) x width (cols), CNR as colour/number, per zone and pixel scale
     sc = m[m.type.isin(SCRATCH_LEN)].assign(length_mm=lambda x: x.type.map(SCRATCH_LEN))
     widths = sorted(sc.size_mm.unique())

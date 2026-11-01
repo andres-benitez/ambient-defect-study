@@ -211,7 +211,14 @@ def main():
             # exposure check (default lens, frame 0)
             if f == 0 and lens_name == default_lens:
                 bg_mean = float(sim[bg_mach].mean())
-                sat = float((sim[plate_mask] >= 1.0).mean())
+                # saturation is judged on the background of each zone, on the exposure that zone is measured
+                # on; defect pixels are excluded because under a lamp burrs and scratch facets glint to
+                # saturation by design (their contrast is then capped, which the metric reports as is)
+                if two_exposures:
+                    sat = max(float((sim[zone_masks["machined"] & ~defect_class] >= 1.0).mean()),
+                              float((sim_cast[zone_masks["cast"] & ~defect_class] >= 1.0).mean()))
+                else:
+                    sat = float((sim[plate_mask & ~defect_class] >= 1.0).mean())
                 lo, hi = (float(v) for v in chk["exposure_range"])
                 ok = lo <= bg_mean <= hi and sat < float(chk["max_saturated_frac"])
                 checks["exposure"] = {"pass": ok, "machined_bg_mean": bg_mean, "saturated_frac": sat, "gain": gain}
@@ -227,6 +234,18 @@ def main():
                     r = {"area_px": int(defect_masks[prim].sum()), "n_bg_px": 0, "mean_in": np.nan, "mean_bg": np.nan, "std_bg": np.nan,
                          "cnr": np.nan, "cnr_peak": np.nan, "weber": np.nan, "detectable": False, "marginal": False, "mask_empty": True,
                          "saturated_bg": False, "error": str(exc)}
+                # the same cast defect on the single exposure set for the machined zone, so the cost of
+                # taking only one shot per view can be read off (equal to the main result otherwise)
+                if use_cast and not r.get("mask_empty", False):
+                    try:
+                        r1 = measure_defect(sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim],
+                                            fallback_region=footprints.get(prim))
+                        r["cnr_1exp"] = r1["cnr"]
+                        r["detectable_1exp"] = bool(r1["detectable"] and not r1.get("saturated_bg", False))
+                    except ValueError:
+                        r["cnr_1exp"], r["detectable_1exp"] = np.nan, False
+                else:
+                    r["cnr_1exp"], r["detectable_1exp"] = r["cnr"], r["detectable"]
                 r.update({
                     "condition": cond, "control": is_control, "frame": f, "prim": prim, "zone": d.zone, "type": d.type,
                     "size_mm": d.size_mm, "depth_mm": d.depth_mm, "length_mm": d.length_mm, "width_mm": d.width_mm,
@@ -269,7 +288,7 @@ def main():
             "camera_model", "sensor_name", "pixel_um", "shutter", "price_eur", "res_x", "res_y", "sensor_width_mm", "focal_length_mm",
             "depth_of_field_mm", "full_well_e", "read_noise_e", "bit_depth",
             "mm_per_px", "view", "working_distance_mm", "lighting_mode",
-            "panel_intensity", "dome_intensity", "directional_intensity", "spp", "gain", "exposure_zone", "seed", "control"]
+            "panel_intensity", "dome_intensity", "directional_intensity", "spp", "gain", "exposure_zone", "cnr_1exp", "detectable_1exp", "seed", "control"]
     df = df[[c for c in cols if c in df.columns] + [c for c in df.columns if c not in cols]]
 
     # ---- mask overlay on the preview

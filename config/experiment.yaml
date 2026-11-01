@@ -237,6 +237,43 @@ conditions:
   # ---- experiment 6: machined-face tool marks (anisotropic reflection along / across the scratches)
   aniso_along:  {materials: {machined: {anisotropy: 0.6, anisotropy_rotation: 0.0}}, render: {frames_per_condition: 1}}
   aniso_across: {materials: {machined: {anisotropy: 0.6, anisotropy_rotation: 0.25}}, render: {frames_per_condition: 1}}
+  # ---- experiment 1b: the dent plate under lighting rigs (30 deg ring; single 15 deg light as in the control)
+  ext_ring30_012:
+    asset: {kind: coupon, dir: assets/coupon_ext, usd: coupon.usd, zone_prims: {cast: Coupon_Cast, machined: Coupon_Machined}}
+    coupon: {plate_mm: [120, 100, 10]}
+    defects:
+      dent_shallow: {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.03}
+      dent_deep:    {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.10}
+      scratch_l1:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 1, depth_ratio: 1.0}
+      scratch_l2:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 2, depth_ratio: 1.0}
+      scratch_l3:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 3, depth_ratio: 1.0}
+    lighting: {mode: ring, ring: {n_lights: 8, elevation_deg: 30, angle_deg: 2.0}}
+    checks: {enforce_exposure: false}
+    render: {frames_per_condition: 1}
+  ext_dir_012:
+    asset: {kind: coupon, dir: assets/coupon_ext, usd: coupon.usd, zone_prims: {cast: Coupon_Cast, machined: Coupon_Machined}}
+    coupon: {plate_mm: [120, 100, 10]}
+    defects:
+      dent_shallow: {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.03}
+      dent_deep:    {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.10}
+      scratch_l1:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 1, depth_ratio: 1.0}
+      scratch_l2:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 2, depth_ratio: 1.0}
+      scratch_l3:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 3, depth_ratio: 1.0}
+    lighting: {mode: directional}
+    checks: {enforce_exposure: false}
+    render: {frames_per_condition: 1}
+  ext_ring60_012:
+    asset: {kind: coupon, dir: assets/coupon_ext, usd: coupon.usd, zone_prims: {cast: Coupon_Cast, machined: Coupon_Machined}}
+    coupon: {plate_mm: [120, 100, 10]}
+    defects:
+      dent_shallow: {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.03}
+      dent_deep:    {diam_mm: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0], depth_ratio: 0.10}
+      scratch_l1:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 1, depth_ratio: 1.0}
+      scratch_l2:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 2, depth_ratio: 1.0}
+      scratch_l3:   {width_mm: [0.02, 0.05, 0.1, 0.2, 0.5, 1.0], length_mm: 3, depth_ratio: 1.0}
+    lighting: {mode: ring, ring: {n_lights: 8, elevation_deg: 60, angle_deg: 2.0}}
+    checks: {enforce_exposure: false}
+    render: {frames_per_condition: 1}
   # ---- experiment 8: camera pose tolerance
   # the near edge of a 120 mm plate tilted 15 deg is 10 mm closer, so it projects 1.2% wider: scale tolerance 2%
   pose_tilt15: {camera: {view: oblique30, oblique_tilt_deg: 15}, checks: {scale_tol_frac: 0.02}, render: {frames_per_condition: 1}}

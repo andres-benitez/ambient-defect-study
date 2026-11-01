@@ -136,6 +136,8 @@ def min_table(summ: pd.DataFrame, cond: str, caption=None, zones=("cast", "machi
     rows = []
     for t in [t for t in ROW_ORDER if t in set(summ["type"])]:
         cells = [TYPE_LABEL[t], SIZE_LABEL[t]]
+        if not any(len(summ[(summ.condition == cond) & (summ.type == t) & (summ.zone == z)]) for z in zones):
+            continue  # defect type not placed in this condition (the dents and short scratches live on the extended plate)
         for z in zones:
             r = summ[(summ.condition == cond) & (summ.type == t) & (summ.zone == z)]
             if len(r) and r["min_detectable"].iloc[0] != "none":
@@ -452,7 +454,7 @@ sup{font-size:.7em}
             ch = load_json(os.path.join(out, pc, "analysis_checks.json"), {})
             mn = load_json(os.path.join(out, pc, "frame_manifest.json"), {})
             part_rows.append([esc(pc), esc(cfg_pc["camera"]["model"]), f'{info["mp"]:g}', f'{cfg_pc["camera"]["mm_per_px"]*1000:.0f} µm', f'{cfg_pc["camera"]["focal_length_mm"]:.0f} mm',
-                              f'{scenario_psf(cfg_pc, "good")["depth_of_field_mm"]:.0f} mm', f'{mn.get("spp", "n/a")}', "pass" if all(v.get("pass") for v in ch.values()) else "see notes"])
+                              f'{scenario_psf(cfg_pc, "good")["depth_of_field_mm"]:.0f} mm', f'{mn.get("spp", "n/a")}', "pass" if all(v.get("pass", True) for v in ch.values() if isinstance(v, dict)) else "see notes"])
         # per-part min tables and comparison with coupon
         comp_rows = []
         for t in [t for t in ROW_ORDER if t in cfg["defects"]]:
@@ -474,6 +476,11 @@ sup{font-size:.7em}
         a5 = agg_all[agg_all.condition == part_conds[0]]
         # defocus blur of the deepest cast site at f/8, in pixels, per whole-part condition
         coc_txt = []
+        depths = -zs  # positive = below the flange plane
+        shallow = depths[depths <= 150]
+        n_deep = int((depths > 150).sum())
+        depth_txt = (f"between {max(0.0, float(-depths.min())):.0f} mm above and {float(shallow.max()):.0f} mm below the focus plane"
+                     + (f", with {n_deep} of them {float(depths[depths > 150].min()):.0f} to {float(depths.max()):.0f} mm down in the deepest bay" if n_deep else ""))
         for pc in part_conds:
             ccp = resolve_condition(cfg, pc)
             camp = build_camera(ccp["camera"])
@@ -481,10 +488,25 @@ sup{font-size:.7em}
             depth_max = float(abs(zs).max())
             coc_px = (camp.focal_length_mm / Np) * depth_max / (camp.distance_mm + depth_max) / camp.mm_per_px
             coc_txt.append(f"{coc_px:.1f} px at {ccp['camera']['model_info']['mp']:g} MP")
+        # exposure zones on the block: under the ceiling light the bays sit several stops darker than
+        # the flange, so compute_cnr measured the cast sites on a second exposure
+        _chk_p = os.path.join(out, part_conds[0], "analysis_checks.json")
+        _ez = json.load(open(_chk_p)).get("exposure_zones", {}) if os.path.exists(_chk_p) else {}
+        p_ratio = float(_ez["gain_cast"]) / float(_ez["gain_machined"]) if _ez.get("two_exposures") else 1.0
+        p_stops = abs(float(np.log2(p_ratio)))
+        _pm = metrics[(metrics.condition == part_conds[0]) & (metrics.frame == 0) & (metrics["lens"].fillna("none") == cfg["lens"].get("default_scenario", "none")) & (metrics.zone == "cast")]
+        p_cast2 = int(_pm.detectable.sum())
+        p_cast1 = int(_pm.detectable_1exp.fillna(_pm.detectable).sum()) if "detectable_1exp" in _pm.columns else p_cast2
+        p_lvl = float(_ez.get("cast_bg_level_at_machined_gain") or float("nan"))
+        _pm2 = _pm[_pm.area_px > 0]
+        p_m2 = float(_pm2.cnr.median()) if len(_pm2) else float("nan")
+        p_m1 = float((_pm2.cnr_1exp.fillna(_pm2.cnr) if "cnr_1exp" in _pm2.columns else _pm2.cnr).median()) if len(_pm2) else float("nan")
+        two_exp_li = (f'<li><b>Two exposures.</b> Under the ceiling light the bays sit about {p_stops:.1f} stops darker than the flange: they see only a cone of the ceiling, and the casting is darker than the machined face. With the exposure set for the flange the bays are at {p_lvl * 100:.0f} % of full scale, so the cast values on the block are measured on a second exposure {p_ratio:.0f} times longer. With the flange exposure alone, {p_cast1} of the 24 cast sites are detectable at a median contrast (CNR) of {p_m1:.1f}; with the second exposure, {p_cast2} at {p_m2:.1f}. Round 2 treats this in detail.</li>'
+                      if _ez.get("two_exposures") else "")
         H.append(f'''<section id="s8"><div class="step"><div class="eyebrow">Step 8</div><h2>The real part: an engine block, whole, in one shot</h2></div>
 <p>The flat test plate isolates the physics. A real crankcase adds curvature, height differences, holes and a narrow sealing flange. To see what that changes, the same 48 defects were placed on a public 3-D scan of a car engine cylinder block ("{esc(src.get("name"))}" by {esc(src.get("author"))}, {esc(src.get("license"))}, {part["extent_mm"][0]:.0f} × {part["extent_mm"][1]:.0f} × {part["extent_mm"][2]:.0f} mm after orientation). The block is viewed from the oil-pan side: the machined zone is the pan sealing flange around the rim, flattened to an ideal plane because a 1 mm scan cannot represent a machined finish, and everything else is the scanned cast surface of the crankcase bays. The camera is placed so the whole part fits in one frame ({cfg["conditions"][part_conds[0]]["framing"]["fov_mm"]} mm across), focused on the flange.</p>
 <div class="two">
-{fig(F.get(part_conds[0] + "_preview"), "Rendered view of the engine block under ambient light", "The whole block as rendered under the ambient ceiling light, 5 MP camera. The bright rim is the machined flange; the bays below are cast and lie 20 to 120 mm under the focus plane.")}
+{fig(F.get(part_conds[0] + "_preview"), "Rendered view of the engine block under ambient light", "The whole block as rendered under the ambient ceiling light, 5 MP camera. The bright rim is the machined flange; the bays below are cast and lie up to 100 mm under the focus plane, the deepest 240 mm.")}
 {fig(F.get("mask_overlay_part_5mp.png"), "Defect masks on the block", "Defect outlines (red) and sub-pixel defect positions (blue squares) over the render. Machined defects sit on the flange, cast defects on upward-facing cast surfaces.")}
 </div>
 {table(["Condition", "Camera", "MP", "Pixel on part", "Lens", "Depth of field f/8", "Samples / px", "Checks"], part_rows, caption="Whole-part conditions. With the part filling the frame the pixels on the metal are coarser than on the 300 mm face. The depth-of-field column is the height range that stays within one pixel of blur at f/8.")}
@@ -492,7 +514,8 @@ sup{font-size:.7em}
 {table(["Defect", "Surface", "Test plate, 5 MP (123 µm/px)"] + [f"Block, {resolve_condition(cfg, pc)['camera']['model_info']['mp']:g} MP ({resolve_condition(cfg, pc)['camera']['mm_per_px']*1000:.0f} µm/px)" for pc in part_conds], comp_rows, caption="Smallest detectable size on the flat test plate against the whole engine block in one shot. An asterisk marks a size narrower than one pixel: a result at the pixel limit that hangs on a few pixels.")}
 <aside class="box"><b>What the real part adds</b><div><ul>
 <li><b>Coarser pixels.</b> Fitting a {part["extent_mm"][0]:.0f} mm part into the frame makes each pixel cover more metal than on a 300 mm face, so the size floor rises by one step for most types.</li>
-<li><b>Depth of field.</b> The cast sites lie {abs(zs).min():.0f} to {abs(zs).max():.0f} mm below the focus plane. At f/8 the deepest of them is blurred by only {" and ".join(coc_txt)}, so the bays stay close to sharp in one view: at these pixel sizes depth of field is not what limits the cast sites. (A first version of this report blurred the bays by tens of pixels through a camera-units error in the renderer; the renders behind these numbers were made after the fix, see the round-2 report.)</li>
+<li><b>Depth of field.</b> The cast sites lie {depth_txt}. At f/8 even the deepest of them is blurred by only {" and ".join(coc_txt)}, and the rest by less than a pixel, so the bays stay close to sharp in one view: at these pixel sizes depth of field is not what limits the cast sites. (A first version of this report blurred the bays by tens of pixels through a camera-units error in the renderer; the renders behind these numbers were made after the fix, see the round-2 report.)</li>
+{two_exp_li}
 <li><b>A narrow machined zone.</b> The sealing flange is about 8 mm wide, so a scratch along it runs close to the edge and the local background ring is partly cast. The measurement still works, but a detector would have to cope with edges everywhere.</li>
 <li><b>Clutter.</b> The scanned cast surface has real bumps and bosses; the cast CNR values on the block (median {a5[a5.zone=="cast"].cnr.median():.1f} over the detectable sizes) are the ones to compare with the plate's.</li>
 </ul></div></aside>
@@ -507,7 +530,7 @@ sup{font-size:.7em}
 <li><b>Everything above the floor is visible only because the ceiling is uniform.</b> The contrast of mid-size defects comes from a smooth face reflecting a smooth, bright ceiling. Under the glass roof the reflection is the sky. This does not change with the camera.</li>
 <li><b>Directional light is the lever.</b> One raking light multiplied the contrast of the same defects by four to six and brought sub-pixel sizes above the threshold. The hardest defects the client wants are exactly the ones that need it.</li>
 <li><b>If a camera is bought anyway:</b> a 12 to 18 MP global-shutter body (a2A4096 or a2A4508 class, €1100 to €1150) with a lens matched to its pixels (€400 to €800) at f/5.6 to f/8 is the best one-shot option near the budget; the 8.3 MP rolling-shutter a2A3840 (€420) is the value option for a static part under non-flickering light. None of them changes conclusion 2.</li>
-<li><b>On a real crankcase</b> the whole-part shot costs another size step in resolution (the same camera spreads its pixels over 620 mm instead of 300 mm) and adds edges, bosses and a narrow flange, but at f/8 the bays stay within about a pixel of focus. What a single view of the whole part can and cannot do is the subject of round 2.</li>
+<li><b>On a real crankcase</b> the whole-part shot costs another size step in resolution (the same camera spreads its pixels over 620 mm instead of 300 mm) and adds edges, bosses and a narrow flange, but at f/8 the bays stay within about a pixel of focus. What they need is light: under the ceiling light they sit about three stops darker than the flange, so a whole-part view wants a second, longer exposure for the bays. What a single view of the whole part can and cannot do is the subject of round 2.</li>
 </ol>
 </section>''')
 

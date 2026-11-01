@@ -196,7 +196,8 @@ assembles `out/report2/index.html`.
 | Experiment | Conditions | Analysis |
 |---|---|---|
 | 1 Dents, 2 scratch envelope | `ext_nadir_012`, `ext_nadir_005` (120 x 100 mm plate, 108 defects incl. dents and 1/2/3 mm long scratches) | `analysis/ext_analysis.py` |
-| 3 One view per face: aperture and focus | `sv18_f56_mid` ... `sv18_f22_mid` (18 MP), `sv5_f8_mid`, `sv5_f16_mid` (5 MP); whole block, focus 60 mm below the flange; `part_5mp`, `part_18mp` give the focus-on-flange rows | `analysis/single_view.py` |
+| 1b Dents under lighting rigs | `ext_ring60_012` (60 deg ring), `ext_ring30_012` (30 deg ring), `ext_dir_012` (single 15 deg light) on the same plate | `analysis/ext_analysis.py` (`dents_rigs.png`) |
+| 3 One view per face: aperture, focus and exposure | `sv18_f56_mid` ... `sv18_f22_mid` (18 MP), `sv5_f8_mid`, `sv5_f16_mid` (5 MP); whole block, focus 60 mm below the flange; `part_5mp`, `part_18mp` give the focus-on-flange rows | `analysis/single_view.py` |
 | 4 Sizing | every coupon condition | `analysis/sizing.py` |
 | 5 Lighting rigs | `rig_ring60`, `rig_ring30`, `rig_dome`, `rig_dir_az0/90/180/270` | `analysis/rigs.py` |
 | 6 Machining marks | `aniso_along`, `aniso_across` | `analysis/variants.py` |
@@ -221,7 +222,7 @@ Round-2 notes:
   the beam away from the camera, so the exposure that puts its background at 40 % of full scale
   saturates the diffuse casting (3-4 stops brighter). `compute_cnr.py` then measures cast defects on
   a second frame exposed for the cast zone and records `exposure_zone` per row (`exposure_zones`
-  in `analysis_checks.json`). Ambient conditions never trigger this.
+  in `analysis_checks.json`). Ambient conditions never trigger this. The same logic fires on the whole engine block under the ambient ceiling light: the cast bays sit about 3.2 stops darker than the flange (they see only a cone of the ceiling and the casting is darker), so the cast sites of the part and single-view conditions are measured on a second exposure about 9x longer. `metrics.csv` carries the single-exposure result next to it (`cnr_1exp`, `detectable_1exp`; equal to `cnr`/`detectable` where one exposure serves both zones), and `single_view.py` reports both counts and the bay exposure time.
 - **Render-noise margin.** `run_capture.py` aims at 0.9 x `checks.render_noise_frac` so the analysis
   re-check (same estimator, a slightly different background mask) cannot fail on the boundary;
   `--keep-failed` writes frames for diagnostics even when the check fails.
