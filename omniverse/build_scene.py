@@ -280,7 +280,15 @@ def main():
     usd_cam.CreateFocalLengthAttr(cam.focal_length_mm)
     usd_cam.CreateHorizontalApertureAttr(cam.sensor_width_mm)
     usd_cam.CreateVerticalApertureAttr(cam.sensor_height_mm)
-    usd_cam.CreateFStopAttr(float(cfg["camera"].get("f_number", 8)))
+    # The RTX path tracer sizes the lens aperture as focalLength / fStop in TENTHS of a scene unit
+    # (the USD camera convention: millimetres when the stage unit is a centimetre). This stage is in
+    # metres, so an f-number authored as-is gave an aperture 100x too large (f/8 on a 25 mm lens became
+    # a 31 cm aperture; calibrated 2026-11-01 against a pinhole render: fStop 80 -> 3 px disc as
+    # predicted for 100x). The USD fStop is therefore the physical f-number scaled by 0.1 / (metersPerUnit / 1000).
+    f_number = float(cfg["camera"].get("f_number", 8))
+    fstop_scale = 0.1 / (UsdGeom.GetStageMetersPerUnit(stage) * 1e-3)
+    fstop_usd = f_number * fstop_scale if f_number > 0 else 0.0
+    usd_cam.CreateFStopAttr(fstop_usd)
     focus_offset = float(cfg["camera"].get("focus_offset_mm", 0.0))  # > 0: focus plane below the reference plane
     usd_cam.CreateFocusDistanceAttr((cam.distance_mm + focus_offset) / 1000.0)
     usd_cam.CreateClippingRangeAttr(Gf.Vec2f(0.01, 100.0))
@@ -385,7 +393,7 @@ def main():
         "condition": cond,
         "control": cfg["condition"]["control"],
         "scene_usd": os.path.relpath(scene_path, REPO_ROOT),
-        "camera": {**cam.to_dict(), "f_number": float(cfg["camera"].get("f_number", 8)), "focus_offset_mm": focus_offset},
+        "camera": {**cam.to_dict(), "f_number": f_number, "fstop_usd": fstop_usd, "fstop_scale": fstop_scale, "focus_offset_mm": focus_offset},
         "lighting_mode": mode,
         "solved_intensity": solved,
         "solve": {"probe_spp": probe_spp, "bg_mean_before": mean0, "bg_mean_after": mean1, "target": target, "factor": factor},

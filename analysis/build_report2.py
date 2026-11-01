@@ -143,14 +143,27 @@ def main():
 </section>''')
 
     # ------------------------------------------------------------------ round 1 recap
+    # ---- correction to round 1: the renderer's aperture was 100x too large before 2026-11-01, which blurred
+    # everything off the focus plane (the block's cast bays). Numbers before/after come from the saved tables.
+    before = read_csv(os.path.join(out, "metrics_before_dof_fix.csv"))
+    part_recap, correction_box = "", ""
+    def det_counts(df, cond):
+        g = df[(df.condition == cond) & (df.frame == 0) & (df["lens"].fillna(default_lens) == default_lens)] if len(df) else pd.DataFrame()
+        return {z: int(g[g.zone == z].detectable.sum()) for z in ("machined", "cast")} if len(g) else None
+    pa, pb = det_counts(m0, "part_18mp"), det_counts(before, "part_18mp")
+    if pa:
+        part_recap = f"With the corrected lens model the 18.5 MP view detects {pa['machined']} of 24 flange defects and {pa['cast']} of 24 cast defects in the bays."
+    if pa and pb:
+        correction_box = f'''<aside class="box warn"><b>A correction to the round-1 report</b><div><p>The round-1 renders used a lens aperture 100 times too large: the renderer reads the aperture in tenths of a scene unit, and the scene is in metres. With the focus on the flat test plate this changed little (the plate re-rendered after the fix keeps the same detectable set; individual contrasts of defects one to two pixels wide moved by up to 30 %), but on the engine block everything below the flange was blurred by tens of pixels, so the cast bays appeared out of focus. Before the fix the 18.5 MP whole-part view detected {pb['cast']} of 24 cast defects; after it, {pa['cast']}. The round-1 sentence "one view loses focus in the bays" was an artefact of this and has been corrected in that report. Every number on this page comes from renders made after the fix; the calibration against a pinhole render is in the appendix.</p></div></aside>'''
     H.append(f'''<section id="round1"><div class="eyebrow">Recap</div><h2>What round 1 established</h2>
 <ul>
 <li><b>A hard floor from pixel size.</b> At 0.12 mm per pixel (a 5 MP camera over a 300 mm face), pores under 0.5 mm, burrs under 0.2 mm and scratches under 0.05 mm wide do not register under constant light, whatever the software. More pixels lower that floor (0.2 mm pores at 8 MP and above) only with a lens matched to the sensor.</li>
 <li><b>The machined face is a mirror of the ceiling.</b> Its high contrast (CNR 20 to 50 for mid-size defects) exists because a smooth face reflects a uniform bright ceiling; the cast face returns a fifth of the light and sits at CNR 5 to 14.</li>
 <li><b>Directional light is the lever.</b> One raking light multiplied the contrast of the same defects by four to six and brought sub-pixel sizes above the threshold.</li>
 <li><b>Sensor quality does not move the floor;</b> resolution does, and a generic lens undoes a size step of it. A rolling shutter costs nothing on a static part.</li>
-<li><b>One view of the whole block</b> at 0.14 mm per pixel kept the flange defects but lost most of the cast bays, which lie 20 to 120 mm below the focus plane.</li>
+<li><b>One view of the whole block</b> at 0.14 mm per pixel costs a size step against the 300 mm face because the same pixels are spread over 620 mm. {part_recap}</li>
 </ul>
+{correction_box}
 <div class="two">
 {fig(F["cnr_vs_size.png"], "Round 1: CNR against size on the test plate", "Round 1 baseline: contrast against defect size on the test plate under constant ambient light (blue cast, orange machined; dashed rule = threshold).")}
 {fig(F["camera_min_detectable.png"], "Round 1: smallest detectable size per camera", "Round 1: smallest detectable size for six Basler cameras framing a 300 mm face, with three lens assumptions.")}
@@ -253,6 +266,7 @@ def main():
 {fig(F["rigs_min_detectable.png"], "Smallest detectable size per rig", "Smallest detectable size per lighting rig for shallow pores, scratches and burrs on both surfaces (test plate, 5 MP class at 0.12 mm per pixel).")}
 {fig(F["rigs_cnr_ratio.png"], "CNR relative to ambient per rig", "Contrast of each rig relative to the ambient ceiling, per defect type (median over sizes that have a footprint). Above 1 the rig helps.")}
 {table(["Rig", "pore mach.", "pore cast", "scratch mach.", "scratch cast", "burr mach.", "burr cast", "CNR vs ambient"], rig_rows, caption="Smallest detectable size per rig and surface, and the median contrast gain over the ambient ceiling.") if rig_rows else '<p class="missing">Rig results not available yet.</p>'}
+<aside class="box"><b>Two exposures for the directional rigs</b><div><p>Under a 30° lamp the machined face reflects the beam away from the camera and looks dark, while the diffuse casting is three to four stops brighter. One exposure cannot serve both: with the machined face correctly exposed, the casting saturates. The directional results therefore use two exposures, one per surface, which is what a station with such a lamp would do anyway. The ambient and dome conditions never need this.</p></div></aside>
 <aside class="box good"><b>What this means</b><div><p>The ranking is the physics of Step 4 in round 1 made quantitative: the dome is the worst light for machined metal, a high ring is little better than the ceiling, and low-angle light, best of all when it comes from several directions in turn, multiplies contrast several-fold and is what brings dents and sub-pixel scratches into reach. A four-segment low ring fired sequentially is the smallest rig that does this.</p></div></aside>
 </section>''')
 
@@ -287,7 +301,7 @@ def main():
 <aside class="box"><b>What this means</b><div><p>Because the rule normalises by the local noise, surface texture that raises the noise lowers the alarm rate as much as it lowers the defects' CNR: the clutter penalty is already inside the CNR figures throughout this report. At the detection threshold the rule fires about ten times per 100 cm² on a clean machined mirror from noise alone and almost never above CNR 4, so a station that works at CNR 4 to 5 on the defects has a quiet background. The price is that marginal defects (CNR 3 to 4) are the ones a real system would have to trade against false calls.</p></div></aside>
 </section>''')
     H.append(f'''<section id="e8"><div class="step"><div class="eyebrow">Experiment 8</div><h2>Camera pose: tilt and distance tolerance</h2></div>
-<p>A certified pixel size has to hold when the camera is not exactly where the drawing says. The plate was rendered with the camera tilted 15° and 30°, and 10 % nearer and farther than nominal.</p>
+<p>A certified pixel size has to hold when the camera is not exactly where the drawing says. The plate was rendered with the camera tilted 15° off the surface normal, and 10 % nearer and farther than nominal. A tilt is also the simplest test of depth of field: across a tilted 120 mm plate the surface height spans 31 mm, so the camera's f/8 lens has to keep that range sharp.</p>
 {table(vhead, var_rows("camera pose"), caption="Smallest detectable size and contrast relative to the nadir baseline for tilted and displaced cameras.") if var_rows("camera pose") else '<p class="missing">Pose results not available yet.</p>'}
 </section>''')
     H.append(f'''<section id="e9"><div class="step"><div class="eyebrow">Experiment 9</div><h2>A shadow across the part</h2></div>

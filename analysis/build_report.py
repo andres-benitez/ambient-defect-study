@@ -472,18 +472,27 @@ sup{font-size:.7em}
         defs = load_defects(resolve_condition(cfg, part_conds[0]))
         zs = np.array([d.center3_mm[2] for d in defs if d.zone == "cast"])
         a5 = agg_all[agg_all.condition == part_conds[0]]
+        # defocus blur of the deepest cast site at f/8, in pixels, per whole-part condition
+        coc_txt = []
+        for pc in part_conds:
+            ccp = resolve_condition(cfg, pc)
+            camp = build_camera(ccp["camera"])
+            Np = float(ccp["camera"].get("f_number", 8))
+            depth_max = float(abs(zs).max())
+            coc_px = (camp.focal_length_mm / Np) * depth_max / (camp.distance_mm + depth_max) / camp.mm_per_px
+            coc_txt.append(f"{coc_px:.1f} px at {ccp['camera']['model_info']['mp']:g} MP")
         H.append(f'''<section id="s8"><div class="step"><div class="eyebrow">Step 8</div><h2>The real part: an engine block, whole, in one shot</h2></div>
 <p>The flat test plate isolates the physics. A real crankcase adds curvature, height differences, holes and a narrow sealing flange. To see what that changes, the same 48 defects were placed on a public 3-D scan of a car engine cylinder block ("{esc(src.get("name"))}" by {esc(src.get("author"))}, {esc(src.get("license"))}, {part["extent_mm"][0]:.0f} × {part["extent_mm"][1]:.0f} × {part["extent_mm"][2]:.0f} mm after orientation). The block is viewed from the oil-pan side: the machined zone is the pan sealing flange around the rim, flattened to an ideal plane because a 1 mm scan cannot represent a machined finish, and everything else is the scanned cast surface of the crankcase bays. The camera is placed so the whole part fits in one frame ({cfg["conditions"][part_conds[0]]["framing"]["fov_mm"]} mm across), focused on the flange.</p>
 <div class="two">
 {fig(F.get(part_conds[0] + "_preview"), "Rendered view of the engine block under ambient light", "The whole block as rendered under the ambient ceiling light, 5 MP camera. The bright rim is the machined flange; the bays below are cast and lie 20 to 120 mm under the focus plane.")}
 {fig(F.get("mask_overlay_part_5mp.png"), "Defect masks on the block", "Defect outlines (red) and sub-pixel defect positions (blue squares) over the render. Machined defects sit on the flange, cast defects on upward-facing cast surfaces.")}
 </div>
-{table(["Condition", "Camera", "MP", "Pixel on part", "Lens", "Depth of field f/8", "Samples / px", "Checks"], part_rows, caption="Whole-part conditions. With the part filling the frame the pixels on the metal are coarser than on the 300 mm face, and the depth of field no longer covers the bays.")}
+{table(["Condition", "Camera", "MP", "Pixel on part", "Lens", "Depth of field f/8", "Samples / px", "Checks"], part_rows, caption="Whole-part conditions. With the part filling the frame the pixels on the metal are coarser than on the 300 mm face. The depth-of-field column is the height range that stays within one pixel of blur at f/8.")}
 {fig(F.get("contact_sheet_part_5mp.png"), "Contact sheet of the block defects, 5 MP", "The 48 defects on the block as the 5 MP camera sees them, 8× magnified. Left: cast sites in the bays. Right: machined sites on the flange.")}
 {table(["Defect", "Surface", "Test plate, 5 MP (123 µm/px)"] + [f"Block, {resolve_condition(cfg, pc)['camera']['model_info']['mp']:g} MP ({resolve_condition(cfg, pc)['camera']['mm_per_px']*1000:.0f} µm/px)" for pc in part_conds], comp_rows, caption="Smallest detectable size on the flat test plate against the whole engine block in one shot. An asterisk marks a size narrower than one pixel: a result at the pixel limit that hangs on a few pixels.")}
 <aside class="box"><b>What the real part adds</b><div><ul>
 <li><b>Coarser pixels.</b> Fitting a {part["extent_mm"][0]:.0f} mm part into the frame makes each pixel cover more metal than on a 300 mm face, so the size floor rises by one step for most types.</li>
-<li><b>Depth of field.</b> The cast sites lie {abs(zs).min():.0f} to {abs(zs).max():.0f} mm below the focus plane; at f/8 only a few centimetres stay sharp, so the deepest sites are blurred before the sensor sees them. On a real line this is traded against exposure time and diffraction (Step 6).</li>
+<li><b>Depth of field.</b> The cast sites lie {abs(zs).min():.0f} to {abs(zs).max():.0f} mm below the focus plane. At f/8 the deepest of them is blurred by only {" and ".join(coc_txt)}, so the bays stay close to sharp in one view: at these pixel sizes depth of field is not what limits the cast sites. (A first version of this report blurred the bays by tens of pixels through a camera-units error in the renderer; the renders behind these numbers were made after the fix, see the round-2 report.)</li>
 <li><b>A narrow machined zone.</b> The sealing flange is about 8 mm wide, so a scratch along it runs close to the edge and the local background ring is partly cast. The measurement still works, but a detector would have to cope with edges everywhere.</li>
 <li><b>Clutter.</b> The scanned cast surface has real bumps and bosses; the cast CNR values on the block (median {a5[a5.zone=="cast"].cnr.median():.1f} over the detectable sizes) are the ones to compare with the plate's.</li>
 </ul></div></aside>
@@ -498,7 +507,7 @@ sup{font-size:.7em}
 <li><b>Everything above the floor is visible only because the ceiling is uniform.</b> The contrast of mid-size defects comes from a smooth face reflecting a smooth, bright ceiling. Under the glass roof the reflection is the sky. This does not change with the camera.</li>
 <li><b>Directional light is the lever.</b> One raking light multiplied the contrast of the same defects by four to six and brought sub-pixel sizes above the threshold. The hardest defects the client wants are exactly the ones that need it.</li>
 <li><b>If a camera is bought anyway:</b> a 12 to 18 MP global-shutter body (a2A4096 or a2A4508 class, €1100 to €1150) with a lens matched to its pixels (€400 to €800) at f/5.6 to f/8 is the best one-shot option near the budget; the 8.3 MP rolling-shutter a2A3840 (€420) is the value option for a static part under non-flickering light. None of them changes conclusion 2.</li>
-<li><b>On a real crankcase</b> the whole-part shot costs another size step in resolution and loses focus in the bays, which argues for either several closer shots or a camera that moves with the light.</li>
+<li><b>On a real crankcase</b> the whole-part shot costs another size step in resolution (the same camera spreads its pixels over 620 mm instead of 300 mm) and adds edges, bosses and a narrow flange, but at f/8 the bays stay within about a pixel of focus. What a single view of the whole part can and cannot do is the subject of round 2.</li>
 </ol>
 </section>''')
 

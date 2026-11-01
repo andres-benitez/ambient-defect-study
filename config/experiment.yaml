@@ -238,8 +238,10 @@ conditions:
   aniso_along:  {materials: {machined: {anisotropy: 0.6, anisotropy_rotation: 0.0}}, render: {frames_per_condition: 1}}
   aniso_across: {materials: {machined: {anisotropy: 0.6, anisotropy_rotation: 0.25}}, render: {frames_per_condition: 1}}
   # ---- experiment 8: camera pose tolerance
-  pose_tilt15: {camera: {view: oblique30, oblique_tilt_deg: 15}, render: {frames_per_condition: 1}}
+  # the near edge of a 120 mm plate tilted 15 deg is 10 mm closer, so it projects 1.2% wider: scale tolerance 2%
+  pose_tilt15: {camera: {view: oblique30, oblique_tilt_deg: 15}, checks: {scale_tol_frac: 0.02}, render: {frames_per_condition: 1}}
   pose_near:   {camera: {mm_per_px: 0.108}, render: {frames_per_condition: 1}}
   pose_far:    {camera: {mm_per_px: 0.132}, render: {frames_per_condition: 1}}
   # ---- experiment 9: a soft shadow from a fixture across the part
-  shadow_012: {lighting: {occluder: {size_m: [0.6, 0.6, 0.02], position_m: [0.35, 0.0, 1.0]}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1}}
+  # the shadowed half is lit only by indirect light and converges slowly: allow 2x the usual sample cap
+  shadow_012: {lighting: {occluder: {size_m: [0.6, 0.6, 0.02], position_m: [0.35, 0.0, 1.0]}}, checks: {enforce_exposure: false}, render: {frames_per_condition: 1, max_spp: 32768}}

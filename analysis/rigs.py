@@ -26,7 +26,7 @@ from ads.layout import ROW_ORDER  # noqa: E402
 from analysis.plot_results import style_axes, COLORS, INK, INK2, MUTED, GRID, SURFACE, SIZE_LABEL  # noqa: E402
 
 RIG_LABEL = {"ambient_nadir_012": "ambient ceiling (baseline)", "rig_dome": "uniform dome (softest)", "rig_ring60": "ring light, 60° elevation",
-             "rig_ring30": "ring light, 30° elevation", "best_of_4": "4-direction sequential, 30° (best of four)", "control_darkfield": "single light, 15° (dark-field control)"}
+             "rig_ring30": "ring light, 30° elevation", "best_of_4": "4-direction sequential, 30° (best of four, two exposures)", "control_darkfield": "single light, 15° (dark-field control, two exposures)"}
 
 
 def main():
@@ -59,7 +59,8 @@ def main():
             rows.append({"condition": cond, "label": RIG_LABEL.get(cond, cond), "zone": z, "type": t,
                          "min_detectable_mm": float(det.size_mm.min()) if len(det) else np.nan, "n_detectable": int(len(det)),
                          "median_cnr_ratio_vs_ambient": float(np.nanmedian(ratio.values)) if len(ratio) else np.nan,
-                         "saturated_bg": bool(gg.saturated_bg.any()) if "saturated_bg" in gg else False})
+                         "saturated_bg": bool(gg.saturated_bg.any()) if "saturated_bg" in gg else False,
+                         "two_exposures": bool((gg.exposure_zone == "cast").any()) if "exposure_zone" in gg else False})
     s = pd.DataFrame(rows)
     s.to_csv(os.path.join(args.out, "rigs_summary.csv"), index=False)
     # figure: smallest detectable per rig (rows) and type (columns), cast and machined

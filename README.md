@@ -185,6 +185,51 @@ overlaps the cast boundary instead of leaving gaps; the scale check compares the
 pixel width with `machined_extent_mm`, because the rest of the part lies below the reference plane
 and is foreshortened; `check_part.py` replaces `checks.py`.
 
+## Round 2: ten further experiments
+
+All round-2 conditions are in `config/experiment.yaml` under `conditions:` and run with
+`python run_all.py --condition <name> --skip-geometry` once the assets exist (`assets/coupon_ext` from
+`blender/make_coupon.py --config ... --condition ext_nadir_012`, the part from `make_part.py`).
+The analyses below read `out/metrics.csv` and write to `out/` and `out/figures/`; `analysis/build_report2.py`
+assembles `out/report2/index.html`.
+
+| Experiment | Conditions | Analysis |
+|---|---|---|
+| 1 Dents, 2 scratch envelope | `ext_nadir_012`, `ext_nadir_005` (120 x 100 mm plate, 108 defects incl. dents and 1/2/3 mm long scratches) | `analysis/ext_analysis.py` |
+| 3 One view per face: aperture and focus | `sv18_f56_mid` ... `sv18_f22_mid` (18 MP), `sv5_f8_mid`, `sv5_f16_mid` (5 MP); whole block, focus 60 mm below the flange; `part_5mp`, `part_18mp` give the focus-on-flange rows | `analysis/single_view.py` |
+| 4 Sizing | every coupon condition | `analysis/sizing.py` |
+| 5 Lighting rigs | `rig_ring60`, `rig_ring30`, `rig_dome`, `rig_dir_az0/90/180/270` | `analysis/rigs.py` |
+| 6 Machining marks | `aniso_along`, `aniso_across` | `analysis/variants.py` |
+| 7 False alarms | every condition | `analysis/false_alarms.py` |
+| 8 Camera pose | `pose_tilt15`, `pose_near`, `pose_far` | `analysis/variants.py` |
+| 9 Shadow | `shadow_012` | `analysis/variants.py` |
+| 10 Learned detector | every coupon condition | `analysis/detector_check.py` |
+
+Round-2 notes:
+
+- **Depth of field in the renderer (fixed 2026-11-01).** The RTX path tracer sizes the lens aperture
+  as focalLength / fStop in tenths of a scene unit; this stage is in metres, so the f-number as
+  authored gave an aperture 100x too large (f/8 on a 25 mm lens was a 31 cm aperture). Flat-coupon
+  renders with the focus on the plate were barely affected, but everything off the focus plane (the
+  cast bays of the engine block, a tilted plate) was blurred by tens of pixels and the defocus
+  sampling left a fixed-pattern floor no sample count removes. `build_scene.py` now scales the USD
+  fStop by `0.1 / (metersPerUnit / 1000)` and records `fstop_usd` in the manifest; the calibration
+  against a pinhole render is in `out/_diag/` (fStop 80 -> 3.0 px disc, as predicted for 100x). All
+  whole-part and single-view conditions were re-rendered after the fix (see the round-2 report for
+  which coupon conditions were re-rendered and why).
+- **Two exposures for directional light.** Under a 30 deg lamp the mirror-like machined zone reflects
+  the beam away from the camera, so the exposure that puts its background at 40 % of full scale
+  saturates the diffuse casting (3-4 stops brighter). `compute_cnr.py` then measures cast defects on
+  a second frame exposed for the cast zone and records `exposure_zone` per row (`exposure_zones`
+  in `analysis_checks.json`). Ambient conditions never trigger this.
+- **Render-noise margin.** `run_capture.py` aims at 0.9 x `checks.render_noise_frac` so the analysis
+  re-check (same estimator, a slightly different background mask) cannot fail on the boundary;
+  `--keep-failed` writes frames for diagnostics even when the check fails.
+- **Maskless long scratches** are measured over their projected footprint (`footprint_region`)
+  instead of a 3 x 3 window.
+- **Deck face.** The scan's cylinder-deck face has a machined land under 6 mm wide between bores, too
+  narrow for the defect layout, so only the oil-pan flange is used as a machined zone.
+
 ## Layout
 
 ```
@@ -209,5 +254,14 @@ analysis/rolling_shutter.py  flicker banding model
 analysis/camera_report.py    camera comparison figures and tables
 analysis/compute_cnr.py      Stage 4a
 analysis/plot_results.py     Stage 4b
+analysis/ext_analysis.py     dents and scratch envelope (round 2)
+analysis/single_view.py      one view per face: aperture/focus sweep
+analysis/sizing.py           size measurement error vs pixels
+analysis/rigs.py             lighting rigs vs ambient
+analysis/variants.py         tool marks, camera pose, shadow
+analysis/false_alarms.py     false-alarm density of the detection rule
+analysis/detector_check.py   learned detector vs CNR
+analysis/build_report.py     round-1 report (out/report)
+analysis/build_report2.py    round-2 report (out/report2)
 tests/test_cnr.py            unit tests
 ```

@@ -149,6 +149,20 @@ def main():
     Y0 = luminance(load_hdr(renders, 0))
     bg_mach = zone_masks["machined"] & ~all_defects_dil & ~ndimage.binary_dilation(defect_class, iterations=4)
     gain = solve_gain(Y0, bg_mach, float(sensor["target_bg_level"]))
+    # ---- second exposure for the cast zone when one exposure cannot serve both zones. Under a
+    # directional lamp the mirror-like machined zone reflects the beam away from the camera, so the
+    # gain that puts its background at the target level saturates the diffuse casting (or, with the
+    # lamp on the camera side, leaves it black). An inspector would take two shots; cast defects are
+    # then measured on a frame exposed for the cast zone and the row records which exposure was used.
+    bg_cast = zone_masks["cast"] & ~all_defects_dil & ~ndimage.binary_dilation(defect_class, iterations=4)
+    cast_level = float(np.mean(Y0[bg_cast]) * gain) if bg_cast.any() else float("nan")
+    two_exposures = bool(np.isfinite(cast_level) and (cast_level >= 0.9 or cast_level <= 0.05))
+    gain_cast = solve_gain(Y0, bg_cast, float(sensor["target_bg_level"])) if two_exposures else gain
+    checks["exposure_zones"] = {"two_exposures": two_exposures, "cast_bg_level_at_machined_gain": cast_level, "gain_machined": gain,
+                                "gain_cast": gain_cast, "stops_between_zones": float(np.log2(gain / gain_cast)) if two_exposures else 0.0}
+    if two_exposures:
+        print(f"[compute_cnr] cast background sits at {cast_level:.2f} of full scale at the machined exposure: "
+              f"cast defects measured on a second exposure ({np.log2(gain / gain_cast):+.1f} stops)")
     noise = flat_patch_std(Y0 * gain, bg_mach, seed=int(cfg["seed"]))
     noise["sensor_std"] = expected_noise_std(noise["level"], sensor)
     noise["ratio"] = noise["std"] / noise["sensor_std"]
@@ -187,6 +201,9 @@ def main():
             Y = luminance(img_lin)
             rng = np.random.default_rng(rng_base * 1000 + f)  # same noise realisation for every lens
             sim = simulate(Y, gain, sensor, rng)
+            sim_cast = simulate(Y, gain_cast, sensor, np.random.default_rng(rng_base * 1000 + f + 500)) if two_exposures else sim
+            if two_exposures and lens_name == default_lens:
+                write_png(os.path.join(out_dir, f"sim_{f}_castexp.png"), to_uint8(sim_cast))
             suffix = "" if lens_name == default_lens else f"_{lens_name}"
             write_png(os.path.join(out_dir, f"sim_{f}{suffix}.png"), to_uint8(sim))
             if lens_name == default_lens:
@@ -202,8 +219,9 @@ def main():
                     fail("exposure", f"machined bg mean {bg_mean:.3f} (want {lo}-{hi}), saturated fraction {sat:.5f}")
             for prim, d in layout.items():
                 others = all_defects_dil & ~dilated[prim]
+                use_cast = two_exposures and d.zone == "cast"
                 try:
-                    r = measure_defect(sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim],
+                    r = measure_defect(sim_cast if use_cast else sim, defect_masks[prim], zone_masks[d.zone], others, an, thr, fallback_center_uv=centers[prim],
                                        fallback_region=footprints.get(prim))
                 except ValueError as exc:
                     r = {"area_px": int(defect_masks[prim].sum()), "n_bg_px": 0, "mean_in": np.nan, "mean_bg": np.nan, "std_bg": np.nan,
@@ -218,7 +236,7 @@ def main():
                     "res_x": cam.res_x, "res_y": cam.res_y,
                     "lighting_mode": manifest["lighting_mode"], "panel_intensity": manifest["solved_intensity"].get("panel"),
                     "dome_intensity": manifest["solved_intensity"].get("dome"), "directional_intensity": manifest["solved_intensity"].get("directional"),
-                    "spp": manifest["spp"], "gain": gain, "seed": cfg["seed"],
+                    "spp": manifest["spp"], "gain": gain_cast if use_cast else gain, "exposure_zone": d.zone if two_exposures else "machined", "seed": cfg["seed"],
                     "lens": lens_name, "f_number": psf["f_number"], "blur_um": psf["blur_um"], "psf_sigma_px": psf["psf_sigma_px"],
                     "psf_sigma_object_mm": psf["psf_sigma_object_mm"], "depth_of_field_mm": psf["depth_of_field_mm"],
                     "camera_model": cfg["sensor"].get("camera_model"), "sensor_name": cam_info.get("sensor"),
@@ -251,7 +269,7 @@ def main():
             "camera_model", "sensor_name", "pixel_um", "shutter", "price_eur", "res_x", "res_y", "sensor_width_mm", "focal_length_mm",
             "depth_of_field_mm", "full_well_e", "read_noise_e", "bit_depth",
             "mm_per_px", "view", "working_distance_mm", "lighting_mode",
-            "panel_intensity", "dome_intensity", "directional_intensity", "spp", "gain", "seed", "control"]
+            "panel_intensity", "dome_intensity", "directional_intensity", "spp", "gain", "exposure_zone", "seed", "control"]
     df = df[[c for c in cols if c in df.columns] + [c for c in df.columns if c not in cols]]
 
     # ---- mask overlay on the preview

@@ -33,6 +33,7 @@ def parse_args():
     ap.add_argument("--frames", type=int, default=None)
     ap.add_argument("--spp", type=int, default=None, help="override starting spp")
     ap.add_argument("--no-auto-spp", action="store_true")
+    ap.add_argument("--keep-failed", action="store_true", help="write the frames even when the render-noise check fails (diagnostics only)")
     return ap.parse_args()
 
 
@@ -91,6 +92,9 @@ def main():
 
     sensor = cfg["sensor"]
     frac = float(cfg["checks"]["render_noise_frac"])
+    # the capture aims below the analysis limit so compute_cnr's re-check (same estimator, slightly
+    # different background mask) cannot land on the boundary and fail at 0.21 after a 0.20 pass here
+    target = frac * float(cfg["render"].get("noise_margin", 0.9))
     auto = bool(cfg["render"].get("auto_spp", True)) and not args.no_auto_spp
     max_spp = int(cfg["render"].get("max_spp", 16384))
     per = int(cfg["render"].get("spp_per_subframe", 32))
@@ -106,7 +110,7 @@ def main():
         est = flat_patch_std(Y, bg, seed=int(cfg["seed"]))
         est["sensor_std"] = expected_noise_std(est["level"], sensor)
         est["ratio"] = est["std"] / est["sensor_std"]
-        est["pass"] = est["ratio"] <= frac
+        est["pass"] = est["ratio"] <= target
         return est
 
     # ---- frame 0 with spp escalation
@@ -121,10 +125,12 @@ def main():
         print(f"[run_capture] frame 0 @ {spp} spp ({sub} subframes, {frame0['wall_s']:.1f}s): render std {est['std']:.5f} vs sensor {est['sensor_std']:.5f} -> ratio {est['ratio']:.2f} ({'pass' if est['pass'] else 'fail'})")
         if est["pass"] or not auto or spp >= max_spp:
             break
-        need = spp * (est["ratio"] / frac) ** 2 * 1.15
+        need = spp * (est["ratio"] / target) ** 2 * 1.15
         spp = int(min(max_spp, max(spp * 2, per * math.ceil(need / per))))
     if not est["pass"]:
-        raise RuntimeError(f"render noise check failed at {spp} spp: ratio {est['ratio']:.2f} > {frac}")
+        if not args.keep_failed:
+            raise RuntimeError(f"render noise check failed at {spp} spp: ratio {est['ratio']:.2f} > {target:.3f}")
+        print(f"[run_capture] WARNING: render noise check failed (ratio {est['ratio']:.2f}); writing frames anyway (--keep-failed)")
 
     frames = [frame0]
     for f in range(1, n_frames):
